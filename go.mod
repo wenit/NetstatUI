@@ -3,6 +3,7 @@ module github.com/zwb/network-ports
 go 1.25.0
 
 require (
+	github.com/cakturk/go-netstat v0.0.0-20200220111822-e5b49efee7a5
 	github.com/wailsapp/wails/v3 v3.0.0-alpha.98
 	golang.org/x/sys v0.43.0
 )

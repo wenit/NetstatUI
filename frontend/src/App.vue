@@ -97,7 +97,7 @@ const displayStats = computed(() => {
     if (c.protocol === 'udp4' || c.protocol === 'udp6') udp++
   }
   return {
-    total: stats.value.total,
+    total: conns.value.size,
     listen,
     established,
     udp,

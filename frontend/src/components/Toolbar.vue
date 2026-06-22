@@ -66,6 +66,7 @@ async function doRefresh() {
         </svg>
       </button>
       <span class="refresh-time">{{ t('toolbar.refreshTime') }}{{ timeStr }}</span>
+      <span class="warn" :title="t('toolbar.limitedNote')">&#9888;</span>
     </div>
     <div class="right">
       <slot />
@@ -121,4 +122,9 @@ async function doRefresh() {
 .icon-btn:hover { background: var(--bg-hover); color: var(--text); }
 .icon-btn.active { color: var(--state-listen); }
 .refresh-time { font-size: 11px; color: var(--text-tertiary); font-family: var(--font-mono); white-space: nowrap; }
+.warn {
+  font-size: 14px; color: var(--state-listen); cursor: help; opacity: 0.6;
+  transition: opacity var(--transition-fast);
+}
+.warn:hover { opacity: 1; }
 </style>

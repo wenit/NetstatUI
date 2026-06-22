@@ -5,8 +5,8 @@ Wails 3 (alpha.98) + Vue 3 + TypeScript 桌面应用：Win11 Fluent 风格的网
 ## 必读入口
 - `main.go` — Wails 3 application 入口：注册服务、创建 Frameless + Mica 窗口、注册事件类型。
 - `app.go` — `AppService`：绑定给前端的方法 `KillProcess` / `GetProcessDetail` / `OpenProcessFolder`。
-- `services/netstat/` — 跨平台端口查询接口 + Windows 实现（`iphlpapi.dll`）。
-  - `netstat_windows.go` — `GetExtendedTcpTable` / `GetExtendedUdpTable`，TCP4/6 + UDP4/6 并发拉取。
+- `services/netstat/` — 跨平台端口查询接口 + Windows 实现。
+  - `netstat_windows.go` — 使用 `github.com/cakturk/go-netstat` 库（内部调用 `GetTcpTable2` / `GetTcp6Table2` / `GetExtendedUdpTable`），比手写 syscall 更简洁。
 - `services/process/` — PID → 进程信息缓存（`CreateToolhelp32Snapshot` + `QueryFullProcessImageNameW`）。
   - `cache.go` — LRU + TTL 30s 的 path 缓存，`Refresh()` 全量刷 name/ppid，`Enrich()` 批量填充。
 - `services/monitor/` — 轮询调度 + diff 计算 + Wails 事件推送。
@@ -55,6 +55,7 @@ ConnectionTable.vue: sorted → visibleRows (虚拟滚动)
 
 ## 性能设计
 - 后端：TCP4/6 + UDP4/6 单次 `GetExtendedTable` 调用（2 次 syscall：query size + query data）。进程信息 LRU 缓存，path TTL 30s。1000 连接 < 50ms。
+- 使用 `go-netstat` 库（`GetTcpTable2`），比手写 `GetExtendedTcpTable` 更简洁但内核路径相同。
 - 前端：`shallowRef` + Map 替换（不深响应）+ 自定义虚拟滚动（只渲染可见行 ±4 buffer）。10000 行 60fps。
 - diff 推送：首帧 `conn:full` 全量，后续 `conn:diff` 只推 add/remove/update，前端不重渲全表。
 
@@ -67,6 +68,7 @@ ConnectionTable.vue: sorted → visibleRows (虚拟滚动)
 | `conn:error` | `string` | 采集失败 |
 
 ## 已知坑
+- **GetTcpTable2 漏报 loopback listener**（如 127.0.0.1:9245/PID 36020）：Win11 22H2+ 上 `iphlpapi.dll`（`GetTcpTable2` / `GetExtendedTcpTable`）会静默丢弃部分 loopback LISTEN 连接。`netstat -ano` 能看到是因为它用 WMI `Win32_NetTCPConnection` 而非 iphlpapi。目前本工具也用 iphlpapi 路径，会漏掉这些连接。这不是 bug，是 Win11 限制。用户可在 Toolbar 看到提示。
 - `go build ./...` 会尝试编译 `build/ios`（独立 main 包）报错；用 `go build . ./services/...` 代替。
 - `//go:embed all:frontend/dist` 需要 `frontend/dist` 存在；首次 clone 后先 `cd frontend && npm run build` 再 `go build`。
 - `wails3 build` 会自动重新生成 bindings + 构建前端 + 编译 Go，全流程一条命令。
