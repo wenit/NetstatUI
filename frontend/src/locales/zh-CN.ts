@@ -12,7 +12,6 @@ export default {
     pause: '暂停',
     refreshNow: '立即刷新',
     refreshTime: '刷新时间：',
-    limitedNote: 'Win11 22H2+ 上部分 loopback 监听可能未显示',
   },
   filterbar: {
     searchPlaceholder: '搜索 地址 / 端口 / 进程 / PID…',

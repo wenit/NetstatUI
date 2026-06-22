@@ -12,7 +12,6 @@ export default {
     pause: 'Pause',
     refreshNow: 'Refresh now',
     refreshTime: 'Refreshed: ',
-    limitedNote: 'Some loopback listeners may not be shown on Win11 22H2+',
   },
   filterbar: {
     searchPlaceholder: 'Search address / port / process / PID…',
