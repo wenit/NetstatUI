@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useSettingsStore } from '../stores/settings'
 import { useI18n } from 'vue-i18n'
 import type { AppLocale } from '../locales'
@@ -9,6 +9,9 @@ const settings = useSettingsStore()
 const { t } = useI18n()
 
 const emit = defineEmits<{ close: [] }>()
+
+type Tab = 'general' | 'advanced'
+const activeTab = ref<Tab>('general')
 
 const locales: { value: AppLocale; labelKey: string }[] = [
   { value: 'zh-CN', labelKey: 'settings.langZh' },
@@ -20,6 +23,14 @@ const themes: { value: Theme; labelKey: string }[] = [
   { value: 'light', labelKey: 'settings.themeLight' },
   { value: 'dark', labelKey: 'settings.themeDark' },
 ]
+
+const cleared = ref(false)
+
+function clearData() {
+  localStorage.clear()
+  cleared.value = true
+  setTimeout(() => location.reload(), 800)
+}
 
 function onKey(e: KeyboardEvent) {
   if (e.key === 'Escape') emit('close')
@@ -36,29 +47,50 @@ onUnmounted(() => document.removeEventListener('keydown', onKey))
         <span class="title">{{ t('settings.title') }}</span>
         <button class="close-btn" @click="emit('close')">×</button>
       </div>
-      <div class="body">
-        <div class="section">
-          <div class="sec-title">{{ t('settings.language') }}</div>
-          <div class="options">
-            <button
-              v-for="l in locales"
-              :key="l.value"
-              class="opt"
-              :class="{ active: settings.locale === l.value }"
-              @click="settings.setLocale(l.value)"
-            >{{ t(l.labelKey) }}</button>
-          </div>
+      <div class="layout">
+        <div class="tabs">
+          <button
+            v-for="tab in (['general', 'advanced'] as Tab[])"
+            :key="tab"
+            class="tab"
+            :class="{ active: activeTab === tab }"
+            @click="activeTab = tab"
+          >{{ t(`settings.${tab}`) }}</button>
         </div>
-        <div class="section">
-          <div class="sec-title">{{ t('settings.theme') }}</div>
-          <div class="options">
-            <button
-              v-for="th in themes"
-              :key="th.value"
-              class="opt"
-              :class="{ active: settings.theme === th.value }"
-              @click="settings.setTheme(th.value)"
-            >{{ t(th.labelKey) }}</button>
+        <div class="body">
+          <div v-if="activeTab === 'general'">
+            <div class="section">
+              <div class="sec-title">{{ t('settings.language') }}</div>
+              <div class="options">
+                <button
+                  v-for="l in locales"
+                  :key="l.value"
+                  class="opt"
+                  :class="{ active: settings.locale === l.value }"
+                  @click="settings.setLocale(l.value)"
+                >{{ t(l.labelKey) }}</button>
+              </div>
+            </div>
+            <div class="section">
+              <div class="sec-title">{{ t('settings.theme') }}</div>
+              <div class="options">
+                <button
+                  v-for="th in themes"
+                  :key="th.value"
+                  class="opt"
+                  :class="{ active: settings.theme === th.value }"
+                  @click="settings.setTheme(th.value)"
+                >{{ t(th.labelKey) }}</button>
+              </div>
+            </div>
+          </div>
+          <div v-if="activeTab === 'advanced'" class="adv-body">
+            <div class="section">
+              <div class="sec-title">{{ t('settings.clearData') }}</div>
+              <p class="desc">{{ t('settings.clearDataDesc') }}</p>
+              <p v-if="cleared" class="cleared">{{ t('settings.cleared') }}</p>
+              <button v-else class="danger-btn" @click="clearData">{{ t('settings.clearBtn') }}</button>
+            </div>
           </div>
         </div>
       </div>
@@ -78,7 +110,7 @@ onUnmounted(() => document.removeEventListener('keydown', onKey))
   backdrop-filter: blur(2px);
 }
 .dialog {
-  width: 320px;
+  width: 380px;
   background: var(--bg-elevated);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-md);
@@ -115,8 +147,49 @@ onUnmounted(() => document.removeEventListener('keydown', onKey))
   background: var(--bg-hover);
   color: var(--text);
 }
+.layout {
+  display: flex;
+  min-height: 160px;
+}
+.tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 0;
+  border-right: 1px solid var(--border);
+  width: 90px;
+  flex-shrink: 0;
+}
+.tab {
+  height: 32px;
+  padding: 0 14px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border-radius: 0;
+}
+.tab:hover {
+  color: var(--text);
+  background: var(--bg-hover);
+}
+.tab.active {
+  color: var(--accent);
+  background: var(--bg-active);
+  font-weight: 600;
+}
 .body {
+  flex: 1;
   padding: 16px 14px;
+}
+.adv-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 120px;
 }
 .section {
   margin-bottom: 16px;
@@ -131,6 +204,12 @@ onUnmounted(() => document.removeEventListener('keydown', onKey))
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 8px;
+}
+.desc {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin: 0 0 10px;
+  line-height: 1.5;
 }
 .options {
   display: flex;
@@ -155,5 +234,25 @@ onUnmounted(() => document.removeEventListener('keydown', onKey))
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;
+}
+.danger-btn {
+  height: 30px;
+  padding: 0 14px;
+  border: 1px solid var(--danger);
+  background: transparent;
+  color: var(--danger);
+  font-size: 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.danger-btn:hover {
+  background: var(--danger);
+  color: #fff;
+}
+.cleared {
+  font-size: 12px;
+  color: var(--state-established);
+  margin: 0;
 }
 </style>

@@ -66,6 +66,8 @@ export default {
   },
   settings: {
     title: 'Settings',
+    general: 'General',
+    advanced: 'Advanced',
     language: 'Language',
     langZh: '中文',
     langEn: 'English',
@@ -73,6 +75,10 @@ export default {
     themeAuto: 'Follow system',
     themeLight: 'Light',
     themeDark: 'Dark',
+    clearData: 'Clear Data',
+    clearDataDesc: 'Clear all local storage settings and reload',
+    clearBtn: 'Clear & Reload',
+    cleared: 'Cleared, page will reload',
   },
   error: {
     killFailed: 'Failed to kill process (PID {pid})\n{reason}',

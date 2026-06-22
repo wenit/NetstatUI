@@ -66,6 +66,8 @@ export default {
   },
   settings: {
     title: '设置',
+    general: '通用',
+    advanced: '高级',
     language: '语言',
     langZh: '中文',
     langEn: 'English',
@@ -73,6 +75,10 @@ export default {
     themeAuto: '跟随系统',
     themeLight: '浅色',
     themeDark: '深色',
+    clearData: '清除数据',
+    clearDataDesc: '清除本地存储的所有设置并重新加载',
+    clearBtn: '清除并刷新',
+    cleared: '已清除，页面即将刷新',
   },
   error: {
     killFailed: '无法结束进程 (PID {pid})\n{reason}',
