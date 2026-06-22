@@ -3,6 +3,8 @@ import { computed } from 'vue'
 import { useSettingsStore } from '../stores/settings'
 import { refreshNow, setIntervalMs, startMonitor, stopMonitor } from '../composables/useConnections'
 
+const props = defineProps<{ lastRefreshedAt: number }>()
+
 const settings = useSettingsStore()
 
 const intervals = [
@@ -57,6 +59,7 @@ async function doRefresh() {
           <path d="M12 2v3h-3" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round" />
         </svg>
       </button>
+      <span class="refresh-time">{{ new Date(props.lastRefreshedAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) }}</span>
     </div>
     <div class="right">
       <slot />
@@ -111,4 +114,5 @@ async function doRefresh() {
 }
 .icon-btn:hover { background: var(--bg-hover); color: var(--text); }
 .icon-btn.active { color: var(--state-listen); }
+.refresh-time { font-size: 11px; color: var(--text-tertiary); font-family: var(--font-mono); white-space: nowrap; }
 </style>

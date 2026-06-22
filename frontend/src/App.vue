@@ -65,7 +65,7 @@ const errorText = computed(() => error.value)
 <template>
   <div class="app-root">
     <TitleBar />
-    <Toolbar />
+    <Toolbar :last-refreshed-at="lastRefreshedAt" />
     <FilterBar v-model="filter" />
     <div class="main">
       <ConnectionTable
@@ -77,7 +77,7 @@ const errorText = computed(() => error.value)
       />
       <DetailPanel :row="selected" @close="onSelect(null)" />
     </div>
-    <StatsBar :stats="stats" :filtered="filteredCount" :running="settings.running" :last-refreshed-at="lastRefreshedAt" />
+    <StatsBar :stats="stats" :filtered="filteredCount" :running="settings.running" />
     <ContextMenu
       v-if="ctxMenu"
       :x="ctxMenu.x" :y="ctxMenu.y" :row="ctxMenu.row"
