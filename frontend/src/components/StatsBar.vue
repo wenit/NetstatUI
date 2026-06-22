@@ -6,7 +6,13 @@ const props = defineProps<{
   stats: Stats
   filtered: number
   running: boolean
+  lastRefreshedAt: number
 }>()
+
+const timeStr = computed(() => {
+  const d = new Date(props.lastRefreshedAt)
+  return d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+})
 
 const items = computed(() => [
   { label: '总计', value: props.stats.total, color: 'var(--text)' },
@@ -30,6 +36,7 @@ const items = computed(() => [
       <span class="live" :class="{ on: running }">
         <span class="pulse" />{{ running ? '实时' : '已暂停' }}
       </span>
+      <span class="refresh-time">上次刷新 {{ timeStr }}</span>
     </div>
   </div>
 </template>
@@ -53,6 +60,7 @@ const items = computed(() => [
 .status { margin-left: auto; }
 .live { display: flex; align-items: center; gap: 6px; color: var(--text-tertiary); }
 .live.on { color: var(--state-established); }
+.refresh-time { color: var(--text-tertiary); margin-left: 12px; }
 .pulse {
   width: 7px; height: 7px; border-radius: 50%;
   background: currentColor;

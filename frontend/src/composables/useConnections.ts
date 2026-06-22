@@ -20,6 +20,7 @@ const conns = shallowRef<Map<string, ConnRow>>(new Map())
 const stats = shallowRef<Stats>(new Stats())
 const highlights = shallowRef<HighlightState[]>([])
 const error = shallowRef<string>('')
+const lastRefreshedAt = shallowRef<number>(Date.now())
 
 let cleaned = false
 
@@ -38,6 +39,7 @@ function applyFull(list: ConnInfo[]) {
   }
   conns.value = map
   if (hl.length) highlights.value = hl
+  lastRefreshedAt.value = Date.now()
 }
 
 function applyDiff(diff: Diff) {
@@ -60,6 +62,7 @@ function applyDiff(diff: Diff) {
 
   conns.value = map
   if (hl.length) highlights.value = hl
+  lastRefreshedAt.value = Date.now()
 }
 
 function cleanupHighlights() {
@@ -77,6 +80,7 @@ export function useConnections() {
     stats: readonly(stats) as ShallowRef<Stats>,
     highlights: readonly(highlights) as ShallowRef<HighlightState[]>,
     error: readonly(error) as ShallowRef<string>,
+    lastRefreshedAt: readonly(lastRefreshedAt) as ShallowRef<number>,
   }
 }
 

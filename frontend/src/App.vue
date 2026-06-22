@@ -18,7 +18,7 @@ import ContextMenu from './components/ContextMenu.vue'
 const settings = useSettingsStore()
 applyTheme(settings.theme)
 
-const { conns, stats, highlights, error } = useConnections()
+const { conns, stats, highlights, error, lastRefreshedAt } = useConnections()
 
 const filter = ref<FilterState>(emptyFilter())
 const filtered = shallowRef<ConnRow[]>([])
@@ -77,7 +77,7 @@ const errorText = computed(() => error.value)
       />
       <DetailPanel :row="selected" @close="onSelect(null)" />
     </div>
-    <StatsBar :stats="stats" :filtered="filteredCount" :running="settings.running" />
+    <StatsBar :stats="stats" :filtered="filteredCount" :running="settings.running" :last-refreshed-at="lastRefreshedAt" />
     <ContextMenu
       v-if="ctxMenu"
       :x="ctxMenu.x" :y="ctxMenu.y" :row="ctxMenu.row"
