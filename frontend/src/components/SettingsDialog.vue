@@ -26,6 +26,12 @@ const themes: { value: Theme; labelKey: string }[] = [
 
 const cleared = ref(false)
 
+const cacheKeys = ['np.locale', 'np.theme', 'np.interval', 'np.running']
+
+function cacheValue(key: string): string {
+  return localStorage.getItem(key) ?? '(not set)'
+}
+
 function clearData() {
   localStorage.clear()
   cleared.value = true
@@ -91,6 +97,15 @@ onUnmounted(() => document.removeEventListener('keydown', onKey))
               <p v-if="cleared" class="cleared">{{ t('settings.cleared') }}</p>
               <button v-else class="danger-btn" @click="clearData">{{ t('settings.clearBtn') }}</button>
             </div>
+            <div class="section">
+              <div class="sec-title">localStorage</div>
+              <table class="cache-table">
+                <tr v-for="k in cacheKeys" :key="k">
+                  <td class="ck">{{ k }}</td>
+                  <td class="cv">{{ cacheValue(k) }}</td>
+                </tr>
+              </table>
+            </div>
           </div>
         </div>
       </div>
@@ -110,7 +125,7 @@ onUnmounted(() => document.removeEventListener('keydown', onKey))
   backdrop-filter: blur(2px);
 }
 .dialog {
-  width: 380px;
+  width: 520px;
   background: var(--bg-elevated);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-md);
@@ -149,7 +164,7 @@ onUnmounted(() => document.removeEventListener('keydown', onKey))
 }
 .layout {
   display: flex;
-  min-height: 160px;
+  min-height: 220px;
 }
 .tabs {
   display: flex;
@@ -157,7 +172,7 @@ onUnmounted(() => document.removeEventListener('keydown', onKey))
   gap: 2px;
   padding: 12px 0;
   border-right: 1px solid var(--border);
-  width: 90px;
+  width: 100px;
   flex-shrink: 0;
 }
 .tab {
@@ -254,5 +269,23 @@ onUnmounted(() => document.removeEventListener('keydown', onKey))
   font-size: 12px;
   color: var(--state-established);
   margin: 0;
+}
+.cache-table {
+  width: 100%;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  border-collapse: collapse;
+}
+.cache-table td {
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border);
+}
+.ck {
+  color: var(--text-tertiary);
+  width: 40%;
+}
+.cv {
+  color: var(--text);
+  text-align: right;
 }
 </style>
