@@ -45,16 +45,16 @@ function applyDiff(diff: Diff) {
   const map = new Map(conns.value)
   const hl: HighlightState[] = []
 
-  for (const c of diff.added) {
+  for (const c of diff.added ?? []) {
     map.set(c.key, { ...c, _addedAt: now, _changedAt: now })
     hl.push({ key: c.key, type: 'add', until: now + 3000 })
   }
-  for (const c of diff.updated) {
+  for (const c of diff.updated ?? []) {
     const prev = map.get(c.key)
     map.set(c.key, { ...c, _addedAt: prev?._addedAt ?? now, _changedAt: now })
     hl.push({ key: c.key, type: 'update', until: now + 3000 })
   }
-  for (const key of diff.removed) {
+  for (const key of diff.removed ?? []) {
     if (map.delete(key)) hl.push({ key, type: 'remove', until: now + 1500 })
   }
 
@@ -85,7 +85,12 @@ export function initConnections() {
     applyFull(ev.data as unknown as ConnInfo[])
   })
   Events.On('conn:diff', (ev) => {
-    applyDiff(ev.data as unknown as Diff)
+    const d = ev.data as any
+    applyDiff({
+      added: d.added ?? [],
+      removed: d.removed ?? [],
+      updated: d.updated ?? [],
+    } as Diff)
   })
   Events.On('conn:stats', (ev) => {
     stats.value = ev.data as unknown as Stats
