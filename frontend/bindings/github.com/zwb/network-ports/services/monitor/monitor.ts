@@ -10,33 +10,33 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 import * as $models from "./models.js";
 
 export function GetInterval(): $CancellablePromise<number> {
-    return $Call.ByName("github.com/zwb/network-ports/services/monitor.Monitor.GetInterval");
+    return $Call.ByID(1710349940);
 }
 
 export function GetSnapshot(): $CancellablePromise<$models.SnapshotResult> {
-    return $Call.ByName("github.com/zwb/network-ports/services/monitor.Monitor.GetSnapshot").then(($result: any) => {
+    return $Call.ByID(3495076969).then(($result: any) => {
         return $$createType0($result);
     });
 }
 
 export function IsRunning(): $CancellablePromise<boolean> {
-    return $Call.ByName("github.com/zwb/network-ports/services/monitor.Monitor.IsRunning");
+    return $Call.ByID(611305362);
 }
 
 export function RefreshNow(): $CancellablePromise<boolean> {
-    return $Call.ByName("github.com/zwb/network-ports/services/monitor.Monitor.RefreshNow");
+    return $Call.ByID(3645704754);
 }
 
 export function SetInterval(intervalMs: number): $CancellablePromise<boolean> {
-    return $Call.ByName("github.com/zwb/network-ports/services/monitor.Monitor.SetInterval", intervalMs);
+    return $Call.ByID(3414625240, intervalMs);
 }
 
 export function Start(intervalMs: number): $CancellablePromise<boolean> {
-    return $Call.ByName("github.com/zwb/network-ports/services/monitor.Monitor.Start", intervalMs);
+    return $Call.ByID(2642701717, intervalMs);
 }
 
 export function Stop(): $CancellablePromise<boolean> {
-    return $Call.ByName("github.com/zwb/network-ports/services/monitor.Monitor.Stop");
+    return $Call.ByID(1111007783);
 }
 
 // Private type creation functions
