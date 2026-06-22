@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Clipboard } from '@wailsio/runtime'
 import type { ConnRow } from '../composables/useConnections'
 import { AppService } from '../../bindings/github.com/zwb/network-ports'
 import type { Info } from '../../bindings/github.com/zwb/network-ports/services/process/models'
+
+const { t } = useI18n()
 
 const props = defineProps<{ row: ConnRow | null }>()
 const emit = defineEmits<{ close: [] }>()
@@ -28,7 +31,7 @@ async function copyPath() {
 async function killProc() {
   if (!props.row?.pid) return
   const r = await AppService.KillProcess(props.row.pid)
-  if (!r.ok) alert(`无法结束进程 (PID ${props.row.pid})\n${r.reason}`)
+  if (!r.ok) alert(t('error.killFailed', { pid: props.row.pid, reason: r.reason }))
   else emit('close')
 }
 async function openFolder() {
@@ -40,37 +43,37 @@ async function openFolder() {
   <transition name="slide">
     <div v-if="row" class="panel">
       <div class="header">
-        <span class="title">详情</span>
+        <span class="title">{{ t('detail.title') }}</span>
         <button class="close-btn" @click="emit('close')">×</button>
       </div>
       <div class="body">
         <div class="section">
-          <div class="sec-title">连接</div>
+          <div class="sec-title">{{ t('detail.connection') }}</div>
           <div class="grid">
-            <span class="k">协议</span><span class="v mono">{{ row.protocol }}</span>
-            <span class="k">本地</span><span class="v mono">{{ row.localAddr }}:{{ row.localPort }}</span>
-            <span class="k">远程</span><span class="v mono">{{ row.remoteAddr || '*' }}{{ row.remotePort ? ':' + row.remotePort : '' }}</span>
-            <span class="k">状态</span><span class="v"><span class="state-pill">{{ row.state }}</span></span>
+            <span class="k">{{ t('detail.protocol') }}</span><span class="v mono">{{ row.protocol }}</span>
+            <span class="k">{{ t('detail.local') }}</span><span class="v mono">{{ row.localAddr }}:{{ row.localPort }}</span>
+            <span class="k">{{ t('detail.remote') }}</span><span class="v mono">{{ row.remoteAddr || '*' }}{{ row.remotePort ? ':' + row.remotePort : '' }}</span>
+            <span class="k">{{ t('detail.state') }}</span><span class="v"><span class="state-pill">{{ row.state }}</span></span>
           </div>
         </div>
         <div class="section">
-          <div class="sec-title">进程</div>
-          <div v-if="loading" class="loading">加载中…</div>
+          <div class="sec-title">{{ t('detail.process') }}</div>
+          <div v-if="loading" class="loading">{{ t('detail.loading') }}</div>
           <div v-else-if="detail" class="grid">
-            <span class="k">名称</span><span class="v">{{ detail.name || '—' }}</span>
+            <span class="k">{{ t('detail.name') }}</span><span class="v">{{ detail.name || '—' }}</span>
             <span class="k">PID</span><span class="v mono">{{ detail.pid }}</span>
-            <span class="k">父进程</span><span class="v mono">{{ detail.ppid }}</span>
-            <span class="k">路径</span>
+            <span class="k">{{ t('detail.ppid') }}</span><span class="v mono">{{ detail.ppid }}</span>
+            <span class="k">{{ t('detail.path') }}</span>
             <span class="v path" :title="detail.path" @click="copyPath">
               {{ detail.path || '—' }}
-              <span v-if="detail.path" class="copy-hint">点击复制</span>
+              <span v-if="detail.path" class="copy-hint">{{ t('detail.clickToCopy') }}</span>
             </span>
           </div>
-          <div v-else class="loading">无进程信息（PID {{ row.pid }}）</div>
+          <div v-else class="loading">{{ t('detail.noInfo', { pid: row.pid }) }}</div>
         </div>
         <div class="actions" v-if="row.pid">
-          <button class="act" @click="openFolder">打开目录</button>
-          <button class="act danger" @click="killProc">结束进程</button>
+          <button class="act" @click="openFolder">{{ t('detail.openFolder') }}</button>
+          <button class="act danger" @click="killProc">{{ t('detail.kill') }}</button>
         </div>
       </div>
     </div>

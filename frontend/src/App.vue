@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, shallowRef, watch } from 'vue'
+import { usePreferredDark } from '@vueuse/core'
 import { applyTheme, useSettingsStore } from './stores/settings'
+import { setI18nLocale, matchLocale, type AppLocale } from './locales'
+import { AppService } from '../bindings/github.com/zwb/network-ports'
 import {
   initConnections, useConnections,
   startMonitor, stopMonitor, setIntervalMs, fetchSnapshot,
@@ -14,14 +17,17 @@ import ConnectionTable from './components/ConnectionTable.vue'
 import StatsBar from './components/StatsBar.vue'
 import DetailPanel from './components/DetailPanel.vue'
 import ContextMenu from './components/ContextMenu.vue'
+import SettingsDialog from './components/SettingsDialog.vue'
 
 const settings = useSettingsStore()
 applyTheme(settings.theme)
+setI18nLocale(settings.locale)
 
 const { conns, stats, highlights, error, lastRefreshedAt } = useConnections()
 
 const filter = ref<FilterState>(emptyFilter())
 const filtered = shallowRef<ConnRow[]>([])
+const settingsOpen = ref(false)
 
 const selected = ref<ConnRow | null>(null)
 const ctxMenu = ref<{ x: number; y: number; row: ConnRow } | null>(null)
@@ -41,7 +47,24 @@ function onContextmenu(ev: MouseEvent, row: ConnRow) {
   ctxMenu.value = { x: ev.clientX, y: ev.clientY, row }
 }
 
+const preferredDark = usePreferredDark()
+watch(preferredDark, () => {
+  if (settings.theme === 'auto') applyTheme('auto')
+})
+
 onMounted(async () => {
+  if (!localStorage.getItem('np.locale')) {
+    try {
+      const sysLocale = await AppService.GetSystemLocale()
+      if (sysLocale) {
+        const matched = matchLocale(sysLocale)
+        if (matched !== settings.locale) {
+          settings.setLocale(matched as AppLocale)
+        }
+      }
+    } catch {}
+  }
+
   initConnections()
   await fetchSnapshot()
   if (settings.running) {
@@ -56,6 +79,10 @@ watch(() => settings.intervalMs, async (ms) => {
 watch(() => settings.running, async (r) => {
   if (r) { await startMonitor(settings.intervalMs) }
   else { await stopMonitor() }
+})
+
+watch(() => settings.locale, (l) => {
+  setI18nLocale(l)
 })
 
 const filteredCount = computed(() => filtered.value.length)
@@ -80,7 +107,7 @@ const displayStats = computed(() => {
 
 <template>
   <div class="app-root">
-    <TitleBar />
+    <TitleBar @open-settings="settingsOpen = true" />
     <Toolbar :last-refreshed-at="lastRefreshedAt" />
     <FilterBar v-model="filter" />
     <div class="main">
@@ -99,6 +126,7 @@ const displayStats = computed(() => {
       :x="ctxMenu.x" :y="ctxMenu.y" :row="ctxMenu.row"
       @close="ctxMenu = null"
     />
+    <SettingsDialog v-if="settingsOpen" @close="settingsOpen = false" />
     <transition name="fade">
       <div v-if="errorText" class="error-toast">{{ errorText }}</div>
     </transition>

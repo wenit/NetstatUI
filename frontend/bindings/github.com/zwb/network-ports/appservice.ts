@@ -13,19 +13,23 @@ import * as kill$0 from "./services/kill/models.js";
 import * as process$0 from "./services/process/models.js";
 
 export function GetProcessDetail(pid: number): $CancellablePromise<process$0.Info> {
-    return $Call.ByID(481530442, pid).then(($result: any) => {
+    return $Call.ByName("main.AppService.GetProcessDetail", pid).then(($result: any) => {
         return $$createType0($result);
     });
 }
 
+export function GetSystemLocale(): $CancellablePromise<string> {
+    return $Call.ByName("main.AppService.GetSystemLocale");
+}
+
 export function KillProcess(pid: number): $CancellablePromise<kill$0.Result> {
-    return $Call.ByID(3088885651, pid).then(($result: any) => {
+    return $Call.ByName("main.AppService.KillProcess", pid).then(($result: any) => {
         return $$createType1($result);
     });
 }
 
 export function OpenProcessFolder(pid: number): $CancellablePromise<void> {
-    return $Call.ByID(1626926283, pid);
+    return $Call.ByName("main.AppService.OpenProcessFolder", pid);
 }
 
 // Private type creation functions

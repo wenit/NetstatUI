@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Clipboard } from '@wailsio/runtime'
 import type { ConnRow } from '../composables/useConnections'
 import { AppService } from '../../bindings/github.com/zwb/network-ports'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   x: number
@@ -32,7 +35,7 @@ async function openFolder() {
 }
 async function killProc() {
   const r = await AppService.KillProcess(props.row.pid)
-  if (!r.ok) alert(`无法结束进程 (PID ${props.row.pid})\n${r.reason}`)
+  if (!r.ok) alert(t('error.killFailed', { pid: props.row.pid, reason: r.reason }))
   emit('close')
 }
 
@@ -49,12 +52,12 @@ onUnmounted(() => {
 
 <template>
   <div class="ctx-menu" :style="{ left: x + 'px', top: y + 'px' }" @click.stop>
-    <button class="mi" @click="copyCell"><svg width="14" height="14" viewBox="0 0 14 14"><rect x="3" y="3" width="6" height="6" stroke="currentColor" fill="none" /><rect x="5" y="5" width="6" height="6" stroke="currentColor" fill="none" /></svg>复制 地址:端口</button>
-    <button class="mi" @click="copyRow"><svg width="14" height="14" viewBox="0 0 14 14"><rect x="2" y="3" width="10" height="8" stroke="currentColor" fill="none" rx="1" /></svg>复制 行 (CSV)</button>
-    <button class="mi" @click="copyAll"><svg width="14" height="14" viewBox="0 0 14 14"><rect x="2" y="3" width="10" height="8" stroke="currentColor" fill="none" rx="1" /><line x1="4" y1="6" x2="10" y2="6" stroke="currentColor" /><line x1="4" y1="8" x2="10" y2="8" stroke="currentColor" /></svg>复制 含表头</button>
+    <button class="mi" @click="copyCell"><svg width="14" height="14" viewBox="0 0 14 14"><rect x="3" y="3" width="6" height="6" stroke="currentColor" fill="none" /><rect x="5" y="5" width="6" height="6" stroke="currentColor" fill="none" /></svg>{{ t('context.copyAddrPort') }}</button>
+    <button class="mi" @click="copyRow"><svg width="14" height="14" viewBox="0 0 14 14"><rect x="2" y="3" width="10" height="8" stroke="currentColor" fill="none" rx="1" /></svg>{{ t('context.copyRowCsv') }}</button>
+    <button class="mi" @click="copyAll"><svg width="14" height="14" viewBox="0 0 14 14"><rect x="2" y="3" width="10" height="8" stroke="currentColor" fill="none" rx="1" /><line x1="4" y1="6" x2="10" y2="6" stroke="currentColor" /><line x1="4" y1="8" x2="10" y2="8" stroke="currentColor" /></svg>{{ t('context.copyWithHeader') }}</button>
     <div class="divider" />
-    <button class="mi" :disabled="!row.pid" @click="openFolder"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M2 4h3l1.5 1.5H12v6H2z" stroke="currentColor" fill="none" /></svg>打开进程目录</button>
-    <button class="mi danger" :disabled="!row.pid" @click="killProc"><svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="5" stroke="currentColor" fill="none" /><line x1="5" y1="5" x2="9" y2="9" stroke="currentColor" /><line x1="9" y1="5" x2="5" y2="9" stroke="currentColor" /></svg>结束进程</button>
+    <button class="mi" :disabled="!row.pid" @click="openFolder"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M2 4h3l1.5 1.5H12v6H2z" stroke="currentColor" fill="none" /></svg>{{ t('context.openFolder') }}</button>
+    <button class="mi danger" :disabled="!row.pid" @click="killProc"><svg width="14" height="14" viewBox="0 0 14 14"><circle cx="7" cy="7" r="5" stroke="currentColor" fill="none" /><line x1="5" y1="5" x2="9" y2="9" stroke="currentColor" /><line x1="9" y1="5" x2="5" y2="9" stroke="currentColor" /></svg>{{ t('context.kill') }}</button>
   </div>
 </template>
 

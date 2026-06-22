@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { computed, ref, shallowRef, watch, onMounted, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { ConnRow } from '../composables/useConnections'
 import type { HighlightState } from '../composables/useConnections'
 import { AppService } from '../../bindings/github.com/zwb/network-ports'
 import type { State } from '../../bindings/github.com/zwb/network-ports/services/netstat/models'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   rows: ConnRow[]
@@ -131,7 +134,7 @@ async function killRow(row: ConnRow, ev: MouseEvent) {
   lastKill = now
   const r = await AppService.KillProcess(row.pid)
   if (!r.ok) {
-    alert(`无法结束进程 (PID ${row.pid})\n${r.reason}`)
+    alert(t('error.killFailed', { pid: row.pid, reason: r.reason }))
   }
 }
 
@@ -147,28 +150,28 @@ watch(() => props.rows, () => {
   <div class="table-wrap">
     <div class="thead">
       <div class="th protocol" @click="toggleSort('protocol')">
-        协议<span class="arrow" :class="{ show: sortKey==='protocol', desc: sortDesc }">▾</span>
+        {{ t('table.colProtocol') }}<span class="arrow" :class="{ show: sortKey==='protocol', desc: sortDesc }">▾</span>
       </div>
       <div class="th flex" @click="toggleSort('localAddr')">
-        本地地址<span class="arrow" :class="{ show: sortKey==='localAddr', desc: sortDesc }">▾</span>
+        {{ t('table.colLocalAddr') }}<span class="arrow" :class="{ show: sortKey==='localAddr', desc: sortDesc }">▾</span>
       </div>
       <div class="th port" @click="toggleSort('localPort')">
-        端口<span class="arrow" :class="{ show: sortKey==='localPort', desc: sortDesc }">▾</span>
+        {{ t('table.colLocalPort') }}<span class="arrow" :class="{ show: sortKey==='localPort', desc: sortDesc }">▾</span>
       </div>
       <div class="th flex" @click="toggleSort('remoteAddr')">
-        远程地址<span class="arrow" :class="{ show: sortKey==='remoteAddr', desc: sortDesc }">▾</span>
+        {{ t('table.colRemoteAddr') }}<span class="arrow" :class="{ show: sortKey==='remoteAddr', desc: sortDesc }">▾</span>
       </div>
       <div class="th port" @click="toggleSort('remotePort')">
-        端口<span class="arrow" :class="{ show: sortKey==='remotePort', desc: sortDesc }">▾</span>
+        {{ t('table.colRemotePort') }}<span class="arrow" :class="{ show: sortKey==='remotePort', desc: sortDesc }">▾</span>
       </div>
       <div class="th state" @click="toggleSort('state')">
-        状态<span class="arrow" :class="{ show: sortKey==='state', desc: sortDesc }">▾</span>
+        {{ t('table.colState') }}<span class="arrow" :class="{ show: sortKey==='state', desc: sortDesc }">▾</span>
       </div>
       <div class="th pid" @click="toggleSort('pid')">
         PID<span class="arrow" :class="{ show: sortKey==='pid', desc: sortDesc }">▾</span>
       </div>
       <div class="th flex proc" @click="toggleSort('processName')">
-        进程<span class="arrow" :class="{ show: sortKey==='processName', desc: sortDesc }">▾</span>
+        {{ t('table.colProcess') }}<span class="arrow" :class="{ show: sortKey==='processName', desc: sortDesc }">▾</span>
       </div>
       <div class="th kill" />
     </div>
@@ -191,13 +194,13 @@ watch(() => props.rows, () => {
           <div class="td port mono">{{ v.row.remotePort || '—' }}</div>
           <div class="td state"><span class="dot" :style="{ background: stateColor(v.row.state) }" />{{ v.row.state }}</div>
           <div class="td pid mono">{{ v.row.pid || '—' }}</div>
-          <div class="td flex proc" :title="v.row.processPath">{{ v.row.processName || (v.row.pid ? '系统' : '—') }}</div>
+          <div class="td flex proc" :title="v.row.processPath">{{ v.row.processName || (v.row.pid ? t('table.system') : '—') }}</div>
           <div class="td kill" @click.stop="killRow(v.row, $event)">
-            <span class="kill-btn" title="结束进程">×</span>
+            <span class="kill-btn" :title="t('table.kill')">×</span>
           </div>
         </div>
         <div v-if="rows.length === 0" class="empty">
-          <span>暂无连接数据</span>
+          <span>{{ t('table.empty') }}</span>
         </div>
       </div>
     </div>

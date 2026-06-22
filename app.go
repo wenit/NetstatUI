@@ -8,6 +8,7 @@ import (
 
 	"github.com/zwb/network-ports/services/kill"
 	"github.com/zwb/network-ports/services/process"
+	"github.com/zwb/network-ports/services/system"
 )
 
 type AppService struct {
@@ -49,4 +50,8 @@ func (a *AppService) OpenProcessFolder(pid uint32) error {
 		c := exec.Command("xdg-open", dir)
 		return c.Start()
 	}
+}
+
+func (a *AppService) GetSystemLocale() string {
+	return system.GetSystemLocale()
 }

@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { reactive, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { FilterState } from '../composables/useFilters'
+
+const { t } = useI18n()
 
 const props = defineProps<{ modelValue: FilterState }>()
 const emit = defineEmits<{ 'update:modelValue': [FilterState] }>()
@@ -58,7 +61,7 @@ function emitUpdate() {
       <input
         v-model="local.search"
         type="text"
-        placeholder="搜索 地址 / 端口 / 进程 / PID…"
+        :placeholder="t('filterbar.searchPlaceholder')"
         spellcheck="false"
         @input="onSearch"
       />
@@ -78,9 +81,9 @@ function emitUpdate() {
         @click="toggle(local.states, s)"
       >{{ s }}</button>
       <span class="sep" />
-      <button class="chip" :class="{ on: local.listenOnly }" @click="toggleListen">仅监听</button>
-      <button class="chip" :class="{ on: local.externalOnly }" @click="toggleExternal">仅外部</button>
-      <button v-if="activeChips || local.search" class="chip clear-btn" @click="clearAll">清除</button>
+      <button class="chip" :class="{ on: local.listenOnly }" @click="toggleListen">{{ t('filterbar.listenOnly') }}</button>
+      <button class="chip" :class="{ on: local.externalOnly }" @click="toggleExternal">{{ t('filterbar.externalOnly') }}</button>
+      <button v-if="activeChips || local.search" class="chip clear-btn" @click="clearAll">{{ t('filterbar.clear') }}</button>
     </div>
   </div>
 </template>

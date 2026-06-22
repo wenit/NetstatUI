@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 interface DisplayStats {
   total: number
@@ -15,11 +18,11 @@ const props = defineProps<{
 }>()
 
 const items = computed(() => [
-  { label: '总计', value: props.stats.total, color: 'var(--text)' },
-  { label: '监听', value: props.stats.listen, color: 'var(--state-listen)' },
-  { label: '已建立', value: props.stats.established, color: 'var(--state-established)' },
-  { label: 'UDP', value: props.stats.udp, color: 'var(--state-syn)' },
-  { label: '过滤命中', value: props.filtered, color: 'var(--accent)' },
+  { label: t('stats.total'), value: props.stats.total, color: 'var(--text)' },
+  { label: t('stats.listen'), value: props.stats.listen, color: 'var(--state-listen)' },
+  { label: t('stats.established'), value: props.stats.established, color: 'var(--state-established)' },
+  { label: t('stats.udp'), value: props.stats.udp, color: 'var(--state-syn)' },
+  { label: t('stats.filtered'), value: props.filtered, color: 'var(--accent)' },
 ])
 </script>
 
@@ -34,7 +37,7 @@ const items = computed(() => [
     </div>
     <div class="status">
       <span class="live" :class="{ on: running }">
-        <span class="pulse" />{{ running ? '实时' : '已暂停' }}
+        <span class="pulse" />{{ running ? t('stats.live') : t('stats.paused') }}
       </span>
     </div>
   </div>
