@@ -31,7 +31,7 @@ export const useSettingsStore = defineStore('settings', {
     theme: (localStorage.getItem('np.theme') as Theme) || 'auto',
     locale: matchLocale(localStorage.getItem('np.locale')) || matchLocale(navigator.language),
     intervalMs: Number(localStorage.getItem('np.interval')) || 5000,
-    running: true,
+    running: localStorage.getItem('np.running') === '1',
     density: 'comfortable',
   }),
   getters: {
@@ -59,6 +59,7 @@ export const useSettingsStore = defineStore('settings', {
     },
     setRunning(r: boolean) {
       this.running = r
+      localStorage.setItem('np.running', r ? '1' : '0')
     },
   },
 })
