@@ -59,7 +59,7 @@ async function doRefresh() {
           <path d="M12 2v3h-3" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round" />
         </svg>
       </button>
-      <span class="refresh-time">{{ new Date(props.lastRefreshedAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) }}</span>
+      <span class="refresh-time">刷新时间：{{ new Date(props.lastRefreshedAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) }}</span>
     </div>
     <div class="right">
       <slot />
