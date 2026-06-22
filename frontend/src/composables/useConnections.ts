@@ -93,7 +93,7 @@ export function initConnections() {
     } as Diff)
   })
   Events.On('conn:stats', (ev) => {
-    stats.value = ev.data as unknown as Stats
+    stats.value = Object.assign(new Stats(), ev.data)
   })
   Events.On('conn:error', (ev) => {
     error.value = ev.data as unknown as string
