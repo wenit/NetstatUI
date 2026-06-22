@@ -10,4 +10,17 @@ export default defineConfig({
     strictPort: true,
   },
   plugins: [vue(), wails("./bindings")],
+  build: {
+    // @vueuse/core 14.x emits /* #__PURE__ */ annotations at positions
+    // Rolldown's stricter parser rejects; harmless (annotations are just
+    // tree-shaking hints that fall back to "include"). Silence the noise.
+    rollupOptions: {
+      onwarn(warning, defaultHandler) {
+        if (warning.code === "INVALID_ANNOTATION" && warning.id?.includes("@vueuse/core")) {
+          return
+        }
+        defaultHandler(warning)
+      },
+    },
+  },
 });
