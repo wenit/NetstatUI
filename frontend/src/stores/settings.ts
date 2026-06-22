@@ -12,7 +12,7 @@ interface SettingsState {
 export const useSettingsStore = defineStore('settings', {
   state: (): SettingsState => ({
     theme: (localStorage.getItem('np.theme') as Theme) || 'dark',
-    intervalMs: Number(localStorage.getItem('np.interval')) || 2000,
+    intervalMs: Number(localStorage.getItem('np.interval')) || 5000,
     running: true,
     density: 'comfortable',
   }),

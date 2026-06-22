@@ -6,10 +6,10 @@ import { refreshNow, setIntervalMs, startMonitor, stopMonitor } from '../composa
 const settings = useSettingsStore()
 
 const intervals = [
-  { label: '1s', ms: 1000 },
-  { label: '2s', ms: 2000 },
   { label: '5s', ms: 5000 },
-  { label: '10s', ms: 10000 },
+  { label: '15s', ms: 15000 },
+  { label: '30s', ms: 30000 },
+  { label: '60s', ms: 60000 },
 ]
 
 const paused = computed(() => !settings.running)
