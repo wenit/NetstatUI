@@ -1,9 +1,15 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Stats } from '../../bindings/github.com/zwb/network-ports/services/monitor/models'
+
+interface DisplayStats {
+  total: number
+  listen: number
+  established: number
+  udp: number
+}
 
 const props = defineProps<{
-  stats: Stats
+  stats: DisplayStats
   filtered: number
   running: boolean
 }>()

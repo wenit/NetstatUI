@@ -60,6 +60,22 @@ watch(() => settings.running, async (r) => {
 
 const filteredCount = computed(() => filtered.value.length)
 const errorText = computed(() => error.value)
+
+const displayStats = computed(() => {
+  const rows = filtered.value
+  let listen = 0, established = 0, udp = 0
+  for (const c of rows) {
+    if (c.state === 'LISTEN') listen++
+    else if (c.state === 'ESTABLISHED') established++
+    if (c.protocol === 'udp4' || c.protocol === 'udp6') udp++
+  }
+  return {
+    total: stats.value.total,
+    listen,
+    established,
+    udp,
+  }
+})
 </script>
 
 <template>
@@ -77,7 +93,7 @@ const errorText = computed(() => error.value)
       />
       <DetailPanel :row="selected" @close="onSelect(null)" />
     </div>
-    <StatsBar :stats="stats" :filtered="filteredCount" :running="settings.running" />
+    <StatsBar :stats="displayStats" :filtered="filteredCount" :running="settings.running" />
     <ContextMenu
       v-if="ctxMenu"
       :x="ctxMenu.x" :y="ctxMenu.y" :row="ctxMenu.row"
