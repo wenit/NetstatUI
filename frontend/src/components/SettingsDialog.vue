@@ -164,7 +164,7 @@ onUnmounted(() => document.removeEventListener('keydown', onKey))
 }
 .layout {
   display: flex;
-  min-height: 220px;
+  min-height: 300px;
 }
 .tabs {
   display: flex;
