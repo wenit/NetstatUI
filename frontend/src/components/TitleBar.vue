@@ -28,9 +28,9 @@ async function close() {
     </div>
     <div class="spacer" />
     <button class="tb-btn settings" :title="t('titlebar.settings')" @click="emit('open-settings')">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2">
-        <circle cx="8" cy="8" r="2.2" />
-        <path d="M8 1.5v1.8M8 12.7v1.8M14.5 8h-1.8M3.3 8H1.5M12.6 3.4l-1.3 1.3M4.7 11.3l-1.3 1.3M12.6 12.6l-1.3-1.3M4.7 4.7L3.4 3.4" stroke-linecap="round" />
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+        <path d="M8 1.8l1 1.4 1.7-.3.5 1.6 1.5.8-.3 1.7 1 1.4-1 1.4.3 1.7-1.5.8-.5 1.6-1.7-.3-1 1.4-1-1.4-1.7.3-.5-1.6-1.5-.8.3-1.7-1-1.4 1-1.4-.3-1.7 1.5-.8.5-1.6 1.7.3z" />
+        <circle cx="8" cy="8" r="2" />
       </svg>
     </button>
     <button class="tb-btn theme" :title="t('titlebar.toggleTheme')" @click="settings.toggleTheme()">
