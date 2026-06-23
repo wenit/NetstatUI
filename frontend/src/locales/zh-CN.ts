@@ -81,6 +81,8 @@ export default {
     cleared: '已清除，页面即将刷新',
   },
   error: {
+    killFailedTitle: '操作失败',
     killFailed: '无法结束进程 (PID {pid})\n{reason}',
+    ok: '确定',
   },
 }

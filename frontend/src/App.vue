@@ -18,6 +18,7 @@ import StatsBar from './components/StatsBar.vue'
 import DetailPanel from './components/DetailPanel.vue'
 import ContextMenu from './components/ContextMenu.vue'
 import SettingsDialog from './components/SettingsDialog.vue'
+import ErrorDialog from './components/ErrorDialog.vue'
 
 const settings = useSettingsStore()
 applyTheme(settings.theme)
@@ -127,6 +128,7 @@ const displayStats = computed(() => {
       @close="ctxMenu = null"
     />
     <SettingsDialog v-if="settingsOpen" @close="settingsOpen = false" />
+    <ErrorDialog />
     <transition name="fade">
       <div v-if="errorText" class="error-toast">{{ errorText }}</div>
     </transition>

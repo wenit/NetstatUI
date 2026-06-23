@@ -81,6 +81,8 @@ export default {
     cleared: 'Cleared, page will reload',
   },
   error: {
+    killFailedTitle: 'Operation Failed',
     killFailed: 'Failed to kill process (PID {pid})\n{reason}',
+    ok: 'OK',
   },
 }

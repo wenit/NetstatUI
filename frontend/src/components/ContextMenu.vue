@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { Clipboard } from '@wailsio/runtime'
 import type { ConnRow } from '../composables/useConnections'
 import { AppService } from '../../bindings/github.com/zwb/network-ports'
+import { showError } from '../composables/useErrorDialog'
 
 const { t } = useI18n()
 
@@ -35,7 +36,7 @@ async function openFolder() {
 }
 async function killProc() {
   const r = await AppService.KillProcess(props.row.pid)
-  if (!r.ok) alert(t('error.killFailed', { pid: props.row.pid, reason: r.reason }))
+  if (!r.ok) showError(t('error.killFailedTitle'), t('error.killFailed', { pid: props.row.pid, reason: r.reason }))
   emit('close')
 }
 

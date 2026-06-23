@@ -5,6 +5,7 @@ import type { ConnRow } from '../composables/useConnections'
 import type { HighlightState } from '../composables/useConnections'
 import { AppService } from '../../bindings/github.com/zwb/network-ports'
 import type { State } from '../../bindings/github.com/zwb/network-ports/services/netstat/models'
+import { showError } from '../composables/useErrorDialog'
 
 const { t } = useI18n()
 
@@ -134,7 +135,7 @@ async function killRow(row: ConnRow, ev: MouseEvent) {
   lastKill = now
   const r = await AppService.KillProcess(row.pid)
   if (!r.ok) {
-    alert(t('error.killFailed', { pid: row.pid, reason: r.reason }))
+    showError(t('error.killFailedTitle'), t('error.killFailed', { pid: row.pid, reason: r.reason }))
   }
 }
 
