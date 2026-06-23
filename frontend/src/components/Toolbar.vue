@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useSettingsStore } from '../stores/settings'
 import { refreshNow, setIntervalMs, startMonitor, stopMonitor } from '../composables/useConnections'
 import { useI18n } from 'vue-i18n'
@@ -17,6 +17,7 @@ const intervals = [
 ]
 
 const paused = computed(() => !settings.running)
+const spinning = ref(false)
 
 const timeStr = computed(() =>
   new Date(props.lastRefreshedAt).toLocaleTimeString(settings.locale, { hour: '2-digit', minute: '2-digit', second: '2-digit' })
@@ -43,7 +44,12 @@ async function togglePause() {
 }
 
 async function doRefresh() {
-  await refreshNow()
+  spinning.value = true
+  try {
+    await refreshNow()
+  } finally {
+    setTimeout(() => { spinning.value = false }, 500)
+  }
 }
 </script>
 
@@ -64,7 +70,7 @@ async function doRefresh() {
         <svg v-if="paused" width="14" height="14" viewBox="0 0 14 14"><path d="M3 2v10l8-5z" fill="currentColor" /></svg>
         <svg v-else width="14" height="14" viewBox="0 0 14 14"><rect x="3" y="2" width="3" height="10" fill="currentColor" /><rect x="8" y="2" width="3" height="10" fill="currentColor" /></svg>
       </button>
-      <button class="icon-btn" :title="t('toolbar.refreshNow')" @click="doRefresh">
+      <button class="icon-btn" :class="{ spinning }" :title="t('toolbar.refreshNow')" @click="doRefresh">
         <svg width="14" height="14" viewBox="0 0 14 14">
           <path d="M12 7a5 5 0 1 1-1.46-3.54" stroke="currentColor" stroke-width="1.2" fill="none" />
           <path d="M12 2v3h-3" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round" />
@@ -125,5 +131,11 @@ async function doRefresh() {
 }
 .icon-btn:hover { background: var(--bg-hover); color: var(--text); }
 .icon-btn.active { color: var(--state-listen); }
+.icon-btn.spinning svg { animation: spin 0.6s linear; }
+.icon-btn.spinning { color: var(--accent); }
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
 .refresh-time { font-size: 11px; color: var(--text-tertiary); font-family: var(--font-mono); white-space: nowrap; }
 </style>
