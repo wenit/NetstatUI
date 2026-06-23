@@ -1,0 +1,122 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: windows-amd64
+            os: windows-latest
+            artifact: NetstatUI-windows-amd64.exe
+          - target: darwin-arm64
+            os: macos-latest
+            artifact: NetstatUI-macos-arm64
+          - target: darwin-amd64
+            os: macos-13
+            artifact: NetstatUI-macos-amd64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      - name: Install Wails 3
+        run: go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-alpha.98
+
+      - name: Generate TS bindings
+        run: wails3 generate bindings -ts -clean=false
+
+      - name: Install frontend deps
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Build (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          go build -tags production -ldflags="-w -s -H windowsgui" -o bin/${{ matrix.artifact }} .
+
+      - name: Build (macOS)
+        if: matrix.os != 'windows-latest'
+        env:
+          GOOS: darwin
+          GOARCH: ${{ matrix.target == 'darwin-arm64' && 'arm64' || 'amd64' }}
+          CGO_ENABLED: '0'
+        run: |
+          mkdir -p bin
+          go build -tags production -ldflags="-w -s" -o bin/${{ matrix.artifact }} .
+
+      - name: Show binary
+        shell: bash
+        run: |
+          ls -lah bin/
+          file bin/${{ matrix.artifact }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target }}
+          path: bin/${{ matrix.artifact }}
+          if-no-files-found: error
+
+  release:
+    name: Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Rename and zip
+        shell: bash
+        run: |
+          cd dist
+          mv windows-amd64/NetstatUI-windows-amd64.exe NetstatUI.exe
+          mv darwin-arm64/NetstatUI-macos-arm64 NetstatUI
+          mv darwin-amd64/NetstatUI-macos-amd64 NetstatUI-x64
+          zip -j NetstatUI-windows-amd64.zip NetstatUI.exe
+          zip -j NetstatUI-macos-arm64.zip NetstatUI
+          zip -j NetstatUI-macos-amd64.zip NetstatUI-x64
+          rm -rf windows-amd64 darwin-arm64 darwin-amd64
+          ls -lah
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.zip
+          generate_release_notes: true
