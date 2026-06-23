@@ -206,9 +206,9 @@ watch(() => props.rows, () => {
             <span class="kill-btn" :title="t('table.kill')">×</span>
           </div>
         </div>
-        <div v-if="rows.length === 0" class="empty">
-          <span>{{ t('table.empty') }}</span>
-        </div>
+      </div>
+      <div v-if="rows.length === 0" class="empty">
+        <span>{{ t('table.empty') }}</span>
       </div>
     </div>
   </div>
@@ -304,5 +304,6 @@ watch(() => props.rows, () => {
   position: absolute; inset: 0;
   display: flex; align-items: center; justify-content: center;
   color: var(--text-tertiary); font-size: 13px;
+  pointer-events: none;
 }
 </style>
