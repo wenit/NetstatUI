@@ -6,6 +6,7 @@ import type { HighlightState } from '../composables/useConnections'
 import { AppService } from '../../bindings/github.com/zwb/network-ports'
 import type { State } from '../../bindings/github.com/zwb/network-ports/services/netstat/models'
 import { showError } from '../composables/useErrorDialog'
+import { showConfirm } from '../composables/useConfirmDialog'
 
 const { t } = useI18n()
 
@@ -133,6 +134,8 @@ async function killRow(row: ConnRow, ev: MouseEvent) {
   const now = Date.now()
   if (now - lastKill < 800) return
   lastKill = now
+  const ok = await showConfirm(t('confirm.killTitle'), t('confirm.killBody', { pid: row.pid }))
+  if (!ok) return
   const r = await AppService.KillProcess(row.pid)
   if (!r.ok) {
     showError(t('error.killFailedTitle'), t('error.killFailed', { pid: row.pid, reason: r.reason }))

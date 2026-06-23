@@ -85,4 +85,10 @@ export default {
     killFailed: 'Failed to kill process (PID {pid})\n{reason}',
     ok: 'OK',
   },
+  confirm: {
+    killTitle: 'Kill Process',
+    killBody: 'Confirm killing process (PID {pid})?\nThis action cannot be undone.',
+    ok: 'Kill',
+    cancel: 'Cancel',
+  },
 }

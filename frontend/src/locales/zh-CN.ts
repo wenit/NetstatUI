@@ -85,4 +85,10 @@ export default {
     killFailed: '无法结束进程 (PID {pid})\n{reason}',
     ok: '确定',
   },
+  confirm: {
+    killTitle: '结束进程',
+    killBody: '确认结束进程 (PID {pid})？\n此操作不可撤销。',
+    ok: '结束',
+    cancel: '取消',
+  },
 }

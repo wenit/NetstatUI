@@ -6,6 +6,7 @@ import type { ConnRow } from '../composables/useConnections'
 import { AppService } from '../../bindings/github.com/zwb/network-ports'
 import type { Info } from '../../bindings/github.com/zwb/network-ports/services/process/models'
 import { showError } from '../composables/useErrorDialog'
+import { showConfirm } from '../composables/useConfirmDialog'
 
 const { t } = useI18n()
 
@@ -31,6 +32,8 @@ async function copyPath() {
 }
 async function killProc() {
   if (!props.row?.pid) return
+  const ok = await showConfirm(t('confirm.killTitle'), t('confirm.killBody', { pid: props.row.pid }))
+  if (!ok) return
   const r = await AppService.KillProcess(props.row.pid)
   if (!r.ok) showError(t('error.killFailedTitle'), t('error.killFailed', { pid: props.row.pid, reason: r.reason }))
   else emit('close')
