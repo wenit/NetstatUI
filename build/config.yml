@@ -5,11 +5,11 @@ version: '3'
 
 # This information is used to generate the build assets.
 info:
-  companyName: "zwb" # The name of the company
+  companyName: "wenit" # The name of the company
   productName: "NetstatUI" # The name of the application
-  productIdentifier: "com.zwb.netstatui" # The unique product identifier
+  productIdentifier: "com.wenit.netstatui" # The unique product identifier
   description: "Network port and connection inspector" # The application description
-  copyright: "(c) 2026, zwb" # Copyright text
+  copyright: "(c) 2026, wenit" # Copyright text
   comments: "Win11 Fluent netstat-like desktop tool" # Comments
   version: "0.1.0" # The application version
   # cfBundleIconName: "appicon" # The macOS icon name in Assets.car icon bundles (optional)
