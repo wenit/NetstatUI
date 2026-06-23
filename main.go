@@ -26,7 +26,7 @@ func main() {
 
 	app := application.New(application.Options{
 		Name:        "NetstatUI",
-		Description: "Network port and connection inspector",
+		Description: "A graphical user interface for the netstat command",
 		Services: []application.Service{
 			application.NewService(NewAppService(cache)),
 			application.NewService(monitor.New(cache)),

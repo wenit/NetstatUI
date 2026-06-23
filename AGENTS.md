@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Wails 3 (alpha.98) + Vue 3 + TypeScript 桌面应用：Win11 Fluent 风格的网络端口/连接查看器（类似 Linux netstat）。仅 Windows，只读查询 + 结束进程。
+Wails 3 (alpha.98) + Vue 3 + TypeScript 桌面应用：系统 `netstat` 命令的图形化界面（跨平台架构，当前 Windows 完整实现）。只读查询 + 结束进程。
 
 ## 必读入口
 - `main.go` — Wails 3 application 入口：注册服务、创建 Frameless + Mica 窗口、注册事件类型（`conn:full/conn:diff/conn:stats/conn:error`）。

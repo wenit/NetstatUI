@@ -1,22 +1,24 @@
 # NetstatUI
 
-> Win11 Fluent-style desktop network port & connection inspector (like `netstat`).
+> A graphical desktop user interface for the system `netstat` command.
 
 [English](./README.md) · [简体中文](./README.zh-CN.md)
 
-A read-only Windows desktop tool that lists every TCP/UDP connection with its owning PID, process name, and executable path — and lets you kill the process with a single click. Built on **Wails 3** + **Vue 3** with a Fluent **Mica**-backed frameless window.
+NetstatUI wraps the operating system's native `netstat` machinery — sockets, ports, PIDs, processes — into a live, filterable, themeable desktop window. Instead of memorising flags or piping through `grep`, you get a sortable table with one-click kill and an open-in-folder action.
+
+Built on **Wails 3** + **Vue 3** with a cross-platform architecture: Windows is the primary target today (with Win11 Fluent **Mica** styling), and the `Provider` interface makes macOS / Linux straightforward to add.
 
 ---
 
 ## Highlights
 
 - 📡 **Full visibility** — every TCP4 / TCP6 / UDP4 / UDP6 socket, with local + remote endpoints, state, PID and resolved process path.
-- 🎨 **Win11 Fluent UI** — Mica backdrop, light / dark / auto theme, custom title bar, compact & comfortable density.
-- ⚡ **Live updates** — diff-based streaming; first frame is `conn:full`, subsequent ticks push only `added` / `removed` / `updated`.
-- 🚀 **Virtual scroll** — handles 10,000+ rows at 60 fps via custom absolute-positioned virtual scrolling.
-- 🔍 **Rich filtering** — search across all fields, protocol chips, state chips, listen-only / external-only toggles.
-- 🪓 **One-click kill** — confirm dialog → `TerminateProcess`; auto-refresh immediately afterwards.
-- 🌍 **Bilingual** — English (default) / Simplified Chinese, with OS-locale auto-detection.
+- ⚡ **Live incremental updates** — diff-based streaming; first frame is `conn:full`, subsequent ticks push only `added` / `removed` / `updated`.
+- 🚀 **Custom virtual scroll** — handles 10,000+ rows at 60 fps via absolute-positioned virtual scrolling (no third-party grid).
+- 🔍 **Rich filtering** — full-text search across all columns, protocol chips, state chips, listen-only / external-only toggles.
+- 🪓 **One-click kill** — confirm dialog → terminate; auto-refresh immediately afterwards.
+- 🎨 **Adaptive theming** — light / dark / auto (follows OS), Mica backdrop on Windows 11 22621+, compact & comfortable density.
+- 🌍 **Bilingual UI** — English (default) / Simplified Chinese, with OS-locale auto-detection.
 - 💾 **Persistent settings** — theme, locale, interval, running state stored in localStorage (`np.*` keys).
 
 ---
@@ -48,20 +50,20 @@ go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-alpha.98
 wails3 dev
 
 # production build
-.\build.ps1                  # Windows (recommended, bypasses file-lock issue)
-# or
-wails3 build                 # macOS / Linux
+wails3 build                # works on all platforms
+# or, on Windows only:
+.\build.ps1                 # bypasses file-lock issue (see below)
 ```
 
-Output binary: `bin/NetstatUI.exe` (Windows) / `bin/NetstatUI` (Unix).
+Output: `bin/NetstatUI.exe` (Windows) / `bin/NetstatUI` (macOS / Linux).
 
-> **Tip:** if `wails3 build` on Windows fails with `Access is denied`, use `build.ps1` — it forces in-place regeneration of TS bindings and avoids the `RemoveAll+Rename` step that Windows SearchIndexer / Defender holds open.
+> **Tip:** if `wails3 build` on Windows fails with `Access is denied`, use `build.ps1` — it forces in-place regeneration of TS bindings and skips the `RemoveAll+Rename` step that Windows SearchIndexer / Defender holds open.
 
 ---
 
 ## Usage
 
-1. Launch `NetstatUI.exe`.
+1. Launch `NetstatUI`.
 2. The table shows all live connections; the **StatsBar** at the bottom summarises total / listen / established / udp.
 3. **FilterBar** — narrow by protocol, state, or type a search query (matches any visible column).
 4. **Toolbar** — pick a refresh interval (5 / 15 / 30 / 60 s), pause/resume, or hit the refresh button for an immediate pull.
@@ -77,12 +79,24 @@ Open the **⚙ Settings** dialog from the title bar:
 
 ---
 
+## Platform Support
+
+| Platform | Status                                                          |
+| -------- | --------------------------------------------------------------- |
+| Windows  | ✅ Fully implemented — uses `go-netstat` (GetTcpTable2/6 + GetExtendedUdpTable) and Windows `TerminateProcess` |
+| macOS    | 🟡 Stubbed — backend returns "not supported"; see `services/netstat/provider.go` for the `Provider` interface to implement |
+| Linux    | 🟡 Stubbed — same as macOS; `/proc/net/tcp{,6}` is the natural data source |
+
+The cross-platform architecture is in place — `services/netstat/`, `services/process/`, `services/kill/`, `services/system/` all use `//go:build` tags and an injectable `Provider`. Adding a new platform is `netstat_<os>.go` + a `process_<os>.go` for PID resolution. See [`AGENTS.md` → Extension guide](./AGENTS.md#扩展指引).
+
+---
+
 ## Known Limitations
 
-- **Some loopback listeners may be missing** — Windows 11 22H2+ silently drops a subset of `127.0.0.1` LISTEN entries from `GetTcpTable2` / `GetExtendedTcpTable`. `netstat -ano` shows them because it uses WMI. We use the same iphlpapi path as `go-netstat`, so the same limitation applies.
-- **Windows only** — Linux/macOS providers are stubbed (`services/netstat/provider.go` interface) but not implemented. The UI and `kill` service are also Windows-specific.
+- **Some loopback listeners may be missing on Windows 11 22H2+** — `iphlpapi.dll`'s `GetTcpTable2` / `GetExtendedUdpTable` silently drop a subset of `127.0.0.1` LISTEN entries. `netstat -ano` shows them because it uses WMI; we use the same iphlpapi path as `go-netstat`, so the same limitation applies.
+- **Windows-only UI polish** — Mica backdrop, snap layouts, and Win11 Fluent controls are Windows-specific. macOS / Linux will get the generic WebView chrome until native styling is added.
 
-See [`AGENTS.md` → Known pitfalls](./AGENTS.md#known-坑) for more.
+See [`AGENTS.md` → Known pitfalls](./AGENTS.md#已知坑) for more.
 
 ---
 
@@ -93,7 +107,7 @@ See [`AGENTS.md` → Known pitfalls](./AGENTS.md#known-坑) for more.
 ├── main.go                       # Wails app entry, registers services + events
 ├── app.go                        # AppService: KillProcess / GetProcessDetail / OpenProcessFolder / GetSystemLocale
 ├── services/
-│   ├── netstat/                  # TCP/UDP snapshot via go-netstat
+│   ├── netstat/                  # TCP/UDP snapshot (Provider interface + Windows impl)
 │   ├── process/                  # PID → name/path cache (Toolhelp32Snapshot + QueryFullProcessImageNameW)
 │   ├── monitor/                  # Polling, diff, Wails event emit
 │   ├── kill/                     # TerminateProcess wrapper
@@ -122,7 +136,7 @@ See [`AGENTS.md`](./AGENTS.md) for:
 - Entry points and key invariants
 - Data-flow diagram and event payload schema
 - Critical gotchas (byte order, IPv6 struct offsets, first-frame race, embed requirement)
-- Step-by-step extension guides (add a column, a filter, a locale, a backend method)
+- Step-by-step extension guides (add a column, a filter, a locale, a backend method, a platform)
 
 To regenerate TypeScript bindings after changing Go service signatures:
 
