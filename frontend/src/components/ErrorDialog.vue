@@ -1,10 +1,14 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, watch } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useErrorDialog } from '../composables/useErrorDialog'
 
 const { t } = useI18n()
 const { current, dismiss } = useErrorDialog()
+
+const title = computed(() => current.value?.title ?? '')
+const body = computed(() => current.value?.body ?? '')
+const visible = computed(() => current.value !== null)
 
 function onKey(e: KeyboardEvent) {
   if (e.key === 'Escape' && current.value) dismiss()
@@ -16,13 +20,13 @@ onUnmounted(() => document.removeEventListener('keydown', onKey))
 
 <template>
   <transition name="fade">
-    <div v-if="current" class="overlay" @click="dismiss">
+    <div v-if="visible" class="overlay" @click="dismiss">
       <div class="dialog" @click.stop>
         <div class="header">
           <span class="icon">!</span>
-          <span class="title">{{ current.title }}</span>
+          <span class="title">{{ title }}</span>
         </div>
-        <div class="body">{{ current.body }}</div>
+        <div class="body">{{ body }}</div>
         <div class="footer">
           <button class="ok-btn" @click="dismiss">{{ t('error.ok') }}</button>
         </div>
