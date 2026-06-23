@@ -43,10 +43,6 @@ async function togglePause() {
 }
 
 async function doRefresh() {
-  if (!settings.running) {
-    await startMonitor(settings.intervalMs)
-    settings.setRunning(true)
-  }
   await refreshNow()
 }
 </script>
