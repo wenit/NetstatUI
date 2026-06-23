@@ -7,6 +7,7 @@ import { AppService } from '../../bindings/github.com/zwb/network-ports'
 import type { Info } from '../../bindings/github.com/zwb/network-ports/services/process/models'
 import { showError } from '../composables/useErrorDialog'
 import { showConfirm } from '../composables/useConfirmDialog'
+import { refreshNow } from '../composables/useConnections'
 
 const { t } = useI18n()
 
@@ -36,7 +37,7 @@ async function killProc() {
   if (!ok) return
   const r = await AppService.KillProcess(props.row.pid)
   if (!r.ok) showError(t('error.killFailedTitle'), t('error.killFailed', { pid: props.row.pid, reason: r.reason }))
-  else emit('close')
+  else { refreshNow(); emit('close') }
 }
 async function openFolder() {
   if (props.row?.pid) await AppService.OpenProcessFolder(props.row.pid)

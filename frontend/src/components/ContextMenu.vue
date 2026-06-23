@@ -6,6 +6,7 @@ import type { ConnRow } from '../composables/useConnections'
 import { AppService } from '../../bindings/github.com/zwb/network-ports'
 import { showError } from '../composables/useErrorDialog'
 import { showConfirm } from '../composables/useConfirmDialog'
+import { refreshNow } from '../composables/useConnections'
 
 const { t } = useI18n()
 
@@ -40,6 +41,7 @@ async function killProc() {
   if (!ok) return
   const r = await AppService.KillProcess(props.row.pid)
   if (!r.ok) showError(t('error.killFailedTitle'), t('error.killFailed', { pid: props.row.pid, reason: r.reason }))
+  else refreshNow()
   emit('close')
 }
 
