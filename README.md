@@ -6,17 +6,18 @@
 
 NetstatUI wraps the operating system's native `netstat` machinery — sockets, ports, PIDs, processes — into a live, filterable, themeable desktop window. Instead of memorising flags or piping through `grep`, you get a sortable table with one-click kill and an open-in-folder action.
 
-Built on **Wails 3** + **Vue 3** with a cross-platform architecture: Windows is the primary target today (with Win11 Fluent **Mica** styling), and the `Provider` interface makes macOS / Linux straightforward to add.
+Built on **Wails 3** + **Vue 3**, with **gopsutil/v3** as a unified cross-platform backend. Windows, macOS, and Linux all share the same `services/netstat/`, `services/process/`, and `services/kill/` packages — only the platform-specific implementation file differs.
 
 ---
 
 ## Highlights
 
 - 📡 **Full visibility** — every TCP4 / TCP6 / UDP4 / UDP6 socket, with local + remote endpoints, state, PID and resolved process path.
+- 🖥️ **Three platforms, one codebase** — Windows 10/11, macOS 12+, and Linux (WebKitGTK). All features work identically across the trio.
 - ⚡ **Live incremental updates** — diff-based streaming; first frame is `conn:full`, subsequent ticks push only `added` / `removed` / `updated`.
 - 🚀 **Custom virtual scroll** — handles 10,000+ rows at 60 fps via absolute-positioned virtual scrolling (no third-party grid).
 - 🔍 **Rich filtering** — full-text search across all columns, protocol chips, state chips, listen-only / external-only toggles.
-- 🪓 **One-click kill** — confirm dialog → terminate; auto-refresh immediately afterwards.
+- 🪓 **One-click kill** — confirm dialog → `TerminateProcess` (Windows) / `SIGKILL` (macOS/Linux); auto-refresh immediately afterwards.
 - 🎨 **Adaptive theming** — light / dark / auto (follows OS), Mica backdrop on Windows 11 22621+, compact & comfortable density.
 - 🌍 **Bilingual UI** — English (default) / Simplified Chinese, with OS-locale auto-detection.
 - 💾 **Persistent settings** — theme, locale, interval, running state stored in localStorage (`np.*` keys).
@@ -25,14 +26,14 @@ Built on **Wails 3** + **Vue 3** with a cross-platform architecture: Windows is 
 
 ## Tech Stack
 
-| Layer       | Choice                                                   |
-| ----------- | -------------------------------------------------------- |
-| Shell       | Wails 3 `v3.0.0-alpha.98` (Frameless + Mica + WebView2)  |
-| Backend     | Go 1.25+ (`go-netstat`, `windows.TerminateProcess`, ...) |
-| Frontend    | Vue 3 + TypeScript + Vite 8                              |
-| State       | Pinia                                                     |
-| i18n        | vue-i18n `@^9` (`legacy: false`)                         |
-| Utilities   | @vueuse/core `^14`                                       |
+| Layer       | Choice                                                                       |
+| ----------- | ---------------------------------------------------------------------------- |
+| Shell       | Wails 3 `v3.0.0-alpha.98` (Frameless + Mica on Win11; WebKitGTK on Linux)    |
+| Backend     | Go 1.25+ — [`gopsutil/v3`](https://github.com/shirou/gopsutil) for net + process + signal |
+| Frontend    | Vue 3 + TypeScript + Vite 8                                                  |
+| State       | Pinia                                                                         |
+| i18n        | vue-i18n `@^9` (`legacy: false`)                                             |
+| Utilities   | @vueuse/core `^14`                                                           |
 
 See [`AGENTS.md`](./AGENTS.md) for the full architecture, data-flow diagram and invariants.
 
@@ -50,12 +51,24 @@ go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-alpha.98
 wails3 dev
 
 # production build
-wails3 build                # works on all platforms
+wails3 build                  # works on all three platforms
 # or, on Windows only:
-.\build.ps1                 # bypasses file-lock issue (see below)
+.\build.ps1                   # bypasses file-lock issue (see below)
 ```
 
-Output: `bin/NetstatUI.exe` (Windows) / `bin/NetstatUI` (macOS / Linux).
+Output:
+- Windows: `bin/NetstatUI.exe`
+- macOS / Linux: `bin/NetstatUI`
+
+### Linux build dependencies
+
+`wails3 build` on Linux requires WebKitGTK + GTK 3:
+
+```bash
+sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev pkg-config
+```
+
+For older distributions that ship `libwebkit2gtk-4.0`, replace `4.1` with `4.0` in the package name.
 
 > **Tip:** if `wails3 build` on Windows fails with `Access is denied`, use `build.ps1` — it forces in-place regeneration of TS bindings and skips the `RemoveAll+Rename` step that Windows SearchIndexer / Defender holds open.
 
@@ -81,22 +94,28 @@ Open the **⚙ Settings** dialog from the title bar:
 
 ## Platform Support
 
-| Platform | Status                                                          |
-| -------- | --------------------------------------------------------------- |
-| Windows  | ✅ Fully implemented — uses `go-netstat` (GetTcpTable2/6 + GetExtendedUdpTable) and Windows `TerminateProcess` |
-| macOS    | 🟡 Stubbed — backend returns "not supported"; see `services/netstat/provider.go` for the `Provider` interface to implement |
-| Linux    | 🟡 Stubbed — same as macOS; `/proc/net/tcp{,6}` is the natural data source |
+| Platform | Status                                                                                                          |
+| -------- | --------------------------------------------------------------------------------------------------------------- |
+| Windows  | ✅ Full — gopsutil reads via `GetExtendedTcpTable` / `GetExtendedUdpTable`; kill via `TerminateProcess`         |
+| macOS    | ✅ Full — gopsutil reads via `sysctl`; kill via `SIGKILL`; locale via `osascript`                              |
+| Linux    | ✅ Full — gopsutil reads via `/proc/net/{tcp,udp}{,6}`; kill via `SIGKILL`; locale via `$LANG`                  |
 
-The cross-platform architecture is in place — `services/netstat/`, `services/process/`, `services/kill/`, `services/system/` all use `//go:build` tags and an injectable `Provider`. Adding a new platform is `netstat_<os>.go` + a `process_<os>.go` for PID resolution. See [`AGENTS.md` → Extension guide](./AGENTS.md#扩展指引).
+### Platform-specific notes
+
+- **Windows** — Mica backdrop requires Windows 11 build 22621+. On older Windows the window uses an opaque background.
+- **macOS** — first launch may prompt for Accessibility / Full Disk Access permissions (gopsutil reads process info via `libproc`).
+- **Linux** — non-root users cannot see PIDs of sockets owned by other users (kernel restriction); run `sudo ./NetstatUI` for full visibility.
+
+The architecture is pluggable: `services/netstat/`, `services/process/`, `services/kill/`, `services/system/` each define one `*_<os>.go` file per supported OS, selected at compile time via `//go:build` tags. Adding a new platform = `netstat_<os>.go` + `process_<os>.go` + `kill_<os>.go` + `system_<os>.go` + `netstat_platform_<os>.go` + entry in `main.go`'s `switch runtime.GOOS`.
 
 ---
 
 ## Known Limitations
 
-- **Some loopback listeners may be missing on Windows 11 22H2+** — `iphlpapi.dll`'s `GetTcpTable2` / `GetExtendedUdpTable` silently drop a subset of `127.0.0.1` LISTEN entries. `netstat -ano` shows them because it uses WMI; we use the same iphlpapi path as `go-netstat`, so the same limitation applies.
-- **Windows-only UI polish** — Mica backdrop, snap layouts, and Win11 Fluent controls are Windows-specific. macOS / Linux will get the generic WebView chrome until native styling is added.
+- **Some loopback listeners may be missing on Windows 11 22H2+** — `iphlpapi.dll`'s `GetTcpTable2` / `GetExtendedUdpTable` silently drop a subset of `127.0.0.1` LISTEN entries. `netstat -ano` shows them because it uses WMI; we go through the same iphlpapi path as gopsutil, so the same limitation applies.
+- **Mica backdrop is Windows-only** — the frameless translucent window falls back to an opaque background on macOS/Linux.
 
-See [`AGENTS.md` → Known pitfalls](./AGENTS.md#已知坑) for more.
+See [`AGENTS.md` → Known pitfalls](./AGENTS.md#known-坑) for more.
 
 ---
 
@@ -104,14 +123,18 @@ See [`AGENTS.md` → Known pitfalls](./AGENTS.md#已知坑) for more.
 
 ```
 .
-├── main.go                       # Wails app entry, registers services + events
+├── main.go                       # Wails app entry, registers services + events + platform switch
 ├── app.go                        # AppService: KillProcess / GetProcessDetail / OpenProcessFolder / GetSystemLocale
 ├── services/
-│   ├── netstat/                  # TCP/UDP snapshot (Provider interface + Windows impl)
-│   ├── process/                  # PID → name/path cache (Toolhelp32Snapshot + QueryFullProcessImageNameW)
+│   ├── netstat/                  # TCP/UDP snapshot (shared adapter + per-OS provider)
+│   │   ├── netstat_proto.go      # mapProto / mapState / gopsutilSnapshot (shared)
+│   │   ├── netstat_windows.go    # gopsutil wrapper
+│   │   ├── netstat_darwin.go     # gopsutil wrapper
+│   │   └── netstat_linux.go      # gopsutil wrapper
+│   ├── process/                  # PID → name/path cache (gopsutil on all OS)
 │   ├── monitor/                  # Polling, diff, Wails event emit
-│   ├── kill/                     # TerminateProcess wrapper
-│   └── system/                   # GetSystemLocale (registry read)
+│   ├── kill/                     # TerminateProcess (Win) / SIGKILL (Unix) via gopsutil
+│   └── system/                   # GetSystemLocale (registry / osascript / $LANG)
 ├── frontend/
 │   ├── bindings/                 # GENERATED — wails3 generate bindings -ts
 │   └── src/
@@ -122,9 +145,10 @@ See [`AGENTS.md` → Known pitfalls](./AGENTS.md#已知坑) for more.
 │       └── stores/settings.ts    # Pinia store (theme/locale/interval/running/density)
 ├── build/
 │   ├── config.yml                # Wails build metadata (company, product, identifier)
-│   └── windows/info.json         # Windows resource metadata
+│   ├── windows/info.json         # Windows resource metadata
+│   └── darwin/Info.plist         # macOS bundle metadata
 ├── build.ps1                     # Safe Windows build (bypasses file-lock)
-└── .github/workflows/build.yml   # CI: build windows-amd64 + darwin-{arm64,amd64}
+└── .github/workflows/build.yml   # CI: windows-amd64 + darwin-{arm64,amd64} + linux-amd64
 ```
 
 ---
