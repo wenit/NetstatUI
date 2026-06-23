@@ -49,15 +49,11 @@ jobs:
           cache-dependency-path: 'frontend/package-lock.json'
 
       - name: Install Wails 3
+        if: matrix.os != 'ubuntu-latest'
         run: go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-alpha.98
 
-      - name: Install Linux build deps
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libgtk-4-dev libwebkitgtk-6.0-dev pkg-config
-
       - name: Generate TS bindings
+        if: matrix.os != 'ubuntu-latest'
         run: wails3 generate bindings -ts -clean=false
 
       - name: Install frontend deps
