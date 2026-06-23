@@ -1,59 +1,137 @@
-# Welcome to Your New Wails3 Project!
+# NetstatUI
 
-Congratulations on generating your Wails3 application! This README will guide you through the next steps to get your project up and running.
+> Win11 Fluent-style desktop network port & connection inspector (like `netstat`).
 
-## Getting Started
+[English](./README.md) · [简体中文](./README.zh-CN.md)
 
-1. Navigate to your project directory in the terminal.
+A read-only Windows desktop tool that lists every TCP/UDP connection with its owning PID, process name, and executable path — and lets you kill the process with a single click. Built on **Wails 3** + **Vue 3** with a Fluent **Mica**-backed frameless window.
 
-2. To run your application in development mode, use the following command:
+---
 
-   ```
-   wails3 dev
-   ```
+## Highlights
 
-   This will start your application and enable hot-reloading for both frontend and backend changes.
+- 📡 **Full visibility** — every TCP4 / TCP6 / UDP4 / UDP6 socket, with local + remote endpoints, state, PID and resolved process path.
+- 🎨 **Win11 Fluent UI** — Mica backdrop, light / dark / auto theme, custom title bar, compact & comfortable density.
+- ⚡ **Live updates** — diff-based streaming; first frame is `conn:full`, subsequent ticks push only `added` / `removed` / `updated`.
+- 🚀 **Virtual scroll** — handles 10,000+ rows at 60 fps via custom absolute-positioned virtual scrolling.
+- 🔍 **Rich filtering** — search across all fields, protocol chips, state chips, listen-only / external-only toggles.
+- 🪓 **One-click kill** — confirm dialog → `TerminateProcess`; auto-refresh immediately afterwards.
+- 🌍 **Bilingual** — English (default) / Simplified Chinese, with OS-locale auto-detection.
+- 💾 **Persistent settings** — theme, locale, interval, running state stored in localStorage (`np.*` keys).
 
-3. To build your application for production, use:
+---
 
-   ```
-   wails3 build
-   ```
+## Tech Stack
 
-   This will create a production-ready executable in the `build` directory.
+| Layer       | Choice                                                   |
+| ----------- | -------------------------------------------------------- |
+| Shell       | Wails 3 `v3.0.0-alpha.98` (Frameless + Mica + WebView2)  |
+| Backend     | Go 1.25+ (`go-netstat`, `windows.TerminateProcess`, ...) |
+| Frontend    | Vue 3 + TypeScript + Vite 8                              |
+| State       | Pinia                                                     |
+| i18n        | vue-i18n `@^9` (`legacy: false`)                         |
+| Utilities   | @vueuse/core `^14`                                       |
 
-## Exploring Wails3 Features
+See [`AGENTS.md`](./AGENTS.md) for the full architecture, data-flow diagram and invariants.
 
-Now that you have your project set up, it's time to explore the features that Wails3 offers:
+---
 
-1. **Check out the examples**: The best way to learn is by example. Visit the `examples` directory in the `v3/examples` directory to see various sample applications.
+## Build from Source
 
-2. **Run an example**: To run any of the examples, navigate to the example's directory and use:
+Requires **Go 1.25+**, **Node.js 20+**, and the **Wails 3** CLI.
 
-   ```
-   go run .
-   ```
+```bash
+# one-time
+go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-alpha.98
 
-   Note: Some examples may be under development during the alpha phase.
+# dev mode (hot reload)
+wails3 dev
 
-3. **Explore the documentation**: Visit the [Wails3 documentation](https://v3.wails.io/) for in-depth guides and API references.
+# production build
+.\build.ps1                  # Windows (recommended, bypasses file-lock issue)
+# or
+wails3 build                 # macOS / Linux
+```
 
-4. **Join the community**: Have questions or want to share your progress? Join the [Wails Discord](https://discord.gg/JDdSxwjhGf) or visit the [Wails discussions on GitHub](https://github.com/wailsapp/wails/discussions).
+Output binary: `bin/NetstatUI.exe` (Windows) / `bin/NetstatUI` (Unix).
 
-## Project Structure
+> **Tip:** if `wails3 build` on Windows fails with `Access is denied`, use `build.ps1` — it forces in-place regeneration of TS bindings and avoids the `RemoveAll+Rename` step that Windows SearchIndexer / Defender holds open.
 
-Take a moment to familiarize yourself with your project structure:
+---
 
-- `frontend/`: Contains your frontend code (HTML, CSS, JavaScript/TypeScript)
-- `main.go`: The entry point of your Go backend
-- `app.go`: Define your application structure and methods here
-- `wails.json`: Configuration file for your Wails project
+## Usage
 
-## Next Steps
+1. Launch `NetstatUI.exe`.
+2. The table shows all live connections; the **StatsBar** at the bottom summarises total / listen / established / udp.
+3. **FilterBar** — narrow by protocol, state, or type a search query (matches any visible column).
+4. **Toolbar** — pick a refresh interval (5 / 15 / 30 / 60 s), pause/resume, or hit the refresh button for an immediate pull.
+5. Click a row to open the **DetailPanel** (full process info + open-folder action).
+6. Right-click for the context menu — **Kill process** raises a confirmation dialog.
 
-1. Modify the frontend in the `frontend/` directory to create your desired UI.
-2. Add backend functionality in `main.go`.
-3. Use `wails3 dev` to see your changes in real-time.
-4. When ready, build your application with `wails3 build`.
+### Settings
 
-Happy coding with Wails3! If you encounter any issues or have questions, don't hesitate to consult the documentation or reach out to the Wails community.
+Open the **⚙ Settings** dialog from the title bar:
+
+- **General** — theme (auto / light / dark), locale (English / 简体中文), density (compact / comfortable), refresh interval.
+- **Advanced** — clear localStorage to reset everything.
+
+---
+
+## Known Limitations
+
+- **Some loopback listeners may be missing** — Windows 11 22H2+ silently drops a subset of `127.0.0.1` LISTEN entries from `GetTcpTable2` / `GetExtendedTcpTable`. `netstat -ano` shows them because it uses WMI. We use the same iphlpapi path as `go-netstat`, so the same limitation applies.
+- **Windows only** — Linux/macOS providers are stubbed (`services/netstat/provider.go` interface) but not implemented. The UI and `kill` service are also Windows-specific.
+
+See [`AGENTS.md` → Known pitfalls](./AGENTS.md#known-坑) for more.
+
+---
+
+## Project Layout
+
+```
+.
+├── main.go                       # Wails app entry, registers services + events
+├── app.go                        # AppService: KillProcess / GetProcessDetail / OpenProcessFolder / GetSystemLocale
+├── services/
+│   ├── netstat/                  # TCP/UDP snapshot via go-netstat
+│   ├── process/                  # PID → name/path cache (Toolhelp32Snapshot + QueryFullProcessImageNameW)
+│   ├── monitor/                  # Polling, diff, Wails event emit
+│   ├── kill/                     # TerminateProcess wrapper
+│   └── system/                   # GetSystemLocale (registry read)
+├── frontend/
+│   ├── bindings/                 # GENERATED — wails3 generate bindings -ts
+│   └── src/
+│       ├── App.vue               # Layout + initial fetchSnapshot
+│       ├── components/           # TitleBar, Toolbar, FilterBar, ConnectionTable, DetailPanel, ...
+│       ├── composables/          # useConnections (event subscription + diff), useFilters
+│       ├── locales/              # en-US, zh-CN
+│       └── stores/settings.ts    # Pinia store (theme/locale/interval/running/density)
+├── build/
+│   ├── config.yml                # Wails build metadata (company, product, identifier)
+│   └── windows/info.json         # Windows resource metadata
+├── build.ps1                     # Safe Windows build (bypasses file-lock)
+└── .github/workflows/build.yml   # CI: build windows-amd64 + darwin-{arm64,amd64}
+```
+
+---
+
+## Development
+
+See [`AGENTS.md`](./AGENTS.md) for:
+
+- Entry points and key invariants
+- Data-flow diagram and event payload schema
+- Critical gotchas (byte order, IPv6 struct offsets, first-frame race, embed requirement)
+- Step-by-step extension guides (add a column, a filter, a locale, a backend method)
+
+To regenerate TypeScript bindings after changing Go service signatures:
+
+```bash
+wails3 generate bindings -ts -clean=false
+```
+
+---
+
+## License
+
+MIT — see [`LICENSE`](./LICENSE).
