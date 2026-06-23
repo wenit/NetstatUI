@@ -10,11 +10,11 @@
         <key>CFBundleIdentifier</key>
             <string>com.example.networkports</string>
         <key>CFBundleVersion</key>
-            <string>0.2.0</string>
+            <string>0.2.1</string>
         <key>CFBundleGetInfoString</key>
             <string>NetstatUI — a graphical user interface for the netstat command</string>
         <key>CFBundleShortVersionString</key>
-            <string>0.2.0</string>
+            <string>0.2.1</string>
         <key>CFBundleIconFile</key>
             <string>icons</string>
         <key>CFBundleIconName</key>
