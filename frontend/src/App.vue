@@ -3,7 +3,7 @@ import { computed, onMounted, ref, shallowRef, watch } from 'vue'
 import { usePreferredDark } from '@vueuse/core'
 import { applyTheme, useSettingsStore } from './stores/settings'
 import { setI18nLocale, matchLocale, type AppLocale } from './locales'
-import { AppService } from '../bindings/github.com/zwb/network-ports'
+import { AppService } from '../bindings/github.com/wenit/NetstatUI'
 import {
   initConnections, useConnections,
   startMonitor, stopMonitor, setIntervalMs, fetchSnapshot,

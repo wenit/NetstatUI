@@ -8,10 +8,10 @@ import { Create as $Create } from "@wailsio/runtime";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as monitor$0 from "../../../../zwb/network-ports/services/monitor/models.js";
+import * as monitor$0 from "../../../../wenit/NetstatUI/services/monitor/models.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import * as netstat$0 from "../../../../zwb/network-ports/services/netstat/models.js";
+import * as netstat$0 from "../../../../wenit/NetstatUI/services/netstat/models.js";
 
 function configure() {
     Object.freeze(Object.assign($Create.Events, {

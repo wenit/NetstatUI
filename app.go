@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/zwb/network-ports/services/kill"
-	"github.com/zwb/network-ports/services/process"
-	"github.com/zwb/network-ports/services/system"
+	"github.com/wenit/NetstatUI/services/kill"
+	"github.com/wenit/NetstatUI/services/process"
+	"github.com/wenit/NetstatUI/services/system"
 )
 
 type AppService struct {

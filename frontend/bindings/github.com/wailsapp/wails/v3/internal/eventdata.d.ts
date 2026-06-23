@@ -7,10 +7,10 @@ import type { Events } from "@wailsio/runtime";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import type * as monitor$0 from "../../../../zwb/network-ports/services/monitor/models.js";
+import type * as monitor$0 from "../../../../wenit/NetstatUI/services/monitor/models.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import type * as netstat$0 from "../../../../zwb/network-ports/services/netstat/models.js";
+import type * as netstat$0 from "../../../../wenit/NetstatUI/services/netstat/models.js";
 
 declare module "@wailsio/runtime" {
     namespace Events {

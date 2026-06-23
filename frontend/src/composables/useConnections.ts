@@ -1,9 +1,9 @@
 import { shallowRef, readonly, type ShallowRef } from 'vue'
 import { Events } from '@wailsio/runtime'
-import type { ConnInfo } from '../../bindings/github.com/zwb/network-ports/services/netstat/models'
-import { Stats } from '../../bindings/github.com/zwb/network-ports/services/monitor/models'
-import type { Diff } from '../../bindings/github.com/zwb/network-ports/services/monitor/models'
-import { Monitor } from '../../bindings/github.com/zwb/network-ports/services/monitor'
+import type { ConnInfo } from '../../bindings/github.com/wenit/NetstatUI/services/netstat/models'
+import { Stats } from '../../bindings/github.com/wenit/NetstatUI/services/monitor/models'
+import type { Diff } from '../../bindings/github.com/wenit/NetstatUI/services/monitor/models'
+import { Monitor } from '../../bindings/github.com/wenit/NetstatUI/services/monitor'
 export type ConnRow = ConnInfo & {
   _addedAt: number
   _changedAt: number

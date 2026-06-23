@@ -1,4 +1,4 @@
-module github.com/zwb/network-ports
+module github.com/wenit/NetstatUI
 
 go 1.25.0
 

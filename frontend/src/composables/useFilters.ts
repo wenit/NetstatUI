@@ -1,5 +1,5 @@
 import type { ConnRow } from './useConnections'
-import type { State } from '../../bindings/github.com/zwb/network-ports/services/netstat/models'
+import type { State } from '../../bindings/github.com/wenit/NetstatUI/services/netstat/models'
 
 export interface FilterState {
   search: string

@@ -5,9 +5,9 @@ import (
 	"log"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
-	"github.com/zwb/network-ports/services/monitor"
-	"github.com/zwb/network-ports/services/netstat"
-	"github.com/zwb/network-ports/services/process"
+	"github.com/wenit/NetstatUI/services/monitor"
+	"github.com/wenit/NetstatUI/services/netstat"
+	"github.com/wenit/NetstatUI/services/process"
 )
 
 //go:embed all:frontend/dist
