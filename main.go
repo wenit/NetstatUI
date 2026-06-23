@@ -3,6 +3,7 @@ package main
 import (
 	"embed"
 	"log"
+	"runtime"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wenit/NetstatUI/services/monitor"
@@ -21,7 +22,10 @@ func init() {
 }
 
 func main() {
-	netstat.SetProvider(netstat.NewWindowsProvider())
+	if runtime.GOOS != "windows" && runtime.GOOS != "darwin" {
+		log.Fatalf("unsupported platform: %s", runtime.GOOS)
+	}
+	netstat.SetProvider(netstat.NewPlatformProvider())
 	cache := process.NewCache()
 
 	app := application.New(application.Options{

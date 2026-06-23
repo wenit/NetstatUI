@@ -17,3 +17,10 @@ func Get() ([]ConnInfo, error) {
 	}
 	return defaultProvider.Snapshot(context.Background())
 }
+
+// NewPlatformProvider returns the Provider implementation for the current
+// operating system. Each platform file defines its own platformProvider()
+// helper; this wrapper picks the active one.
+func NewPlatformProvider() Provider {
+	return platformProvider()
+}

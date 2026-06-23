@@ -1,4 +1,4 @@
-//go:build windows
+//go:build darwin
 
 package process
 
@@ -6,11 +6,11 @@ import (
 	"github.com/shirou/gopsutil/v3/process"
 )
 
-type windowsProvider struct{}
+type darwinProvider struct{}
 
-func platformProvider() provider { return &windowsProvider{} }
+func platformProvider() provider { return &darwinProvider{} }
 
-func (w *windowsProvider) SnapshotAll() (map[uint32]Info, error) {
+func (d *darwinProvider) SnapshotAll() (map[uint32]Info, error) {
 	procs, err := process.Processes()
 	if err != nil {
 		return nil, err
@@ -33,7 +33,7 @@ func (w *windowsProvider) SnapshotAll() (map[uint32]Info, error) {
 	return out, nil
 }
 
-func (w *windowsProvider) QueryPath(pid uint32) (string, error) {
+func (d *darwinProvider) QueryPath(pid uint32) (string, error) {
 	p, err := process.NewProcess(int32(pid))
 	if err != nil {
 		return "", err

@@ -1,5 +1,5 @@
-//go:build !windows
+//go:build !windows && !darwin
 
 package process
 
-func newWindowsProvider() provider { return nil }
+func platformProvider() provider { return nil }

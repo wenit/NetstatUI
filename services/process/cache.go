@@ -30,7 +30,7 @@ func NewCache() *Cache {
 	return &Cache{
 		entries:  make(map[uint32]*entry),
 		pathTTL:  30 * time.Second,
-		provider: newWindowsProvider(),
+		provider: platformProvider(),
 	}
 }
 
