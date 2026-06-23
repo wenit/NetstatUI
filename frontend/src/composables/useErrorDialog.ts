@@ -1,12 +1,11 @@
-import { shallowRef, readonly } from 'vue'
+import { ref, type Ref } from 'vue'
 
 export interface ErrorPayload {
   title: string
   body: string
 }
 
-const current = shallowRef<ErrorPayload | null>(null)
-let seq = 0
+const current: Ref<ErrorPayload | null> = ref(null)
 
 export function showError(title: string, body: string) {
   current.value = { title, body }
@@ -18,7 +17,7 @@ export function dismissError() {
 
 export function useErrorDialog() {
   return {
-    current: readonly(current),
+    current,
     dismiss: dismissError,
   }
 }
