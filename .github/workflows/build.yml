@@ -55,7 +55,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev pkg-config
+          sudo apt-get install -y libgtk-4-dev libwebkitgtk-6.0-dev pkg-config
 
       - name: Generate TS bindings
         run: wails3 generate bindings -ts -clean=false
@@ -79,7 +79,6 @@ jobs:
         env:
           GOOS: darwin
           GOARCH: ${{ matrix.target == 'darwin-arm64' && 'arm64' || 'amd64' }}
-          CGO_ENABLED: '0'
         run: |
           mkdir -p bin
           go build -tags production -ldflags="-w -s" -o bin/${{ matrix.artifact }} .
