@@ -38,6 +38,10 @@ async function togglePause() {
 }
 
 async function doRefresh() {
+  if (!settings.running) {
+    await startMonitor(settings.intervalMs)
+    settings.setRunning(true)
+  }
   await refreshNow()
 }
 </script>
@@ -65,7 +69,7 @@ async function doRefresh() {
           <path d="M12 2v3h-3" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round" />
         </svg>
       </button>
-      <span class="refresh-time">{{ t('toolbar.refreshTime') }}{{ timeStr }}</span>
+      <span class="refresh-time" :title="paused ? t('toolbar.resume') : t('toolbar.pause')" @click="togglePause">{{ t('toolbar.refreshTime') }}{{ timeStr }}</span>
     </div>
     <div class="right">
       <slot />
@@ -120,5 +124,15 @@ async function doRefresh() {
 }
 .icon-btn:hover { background: var(--bg-hover); color: var(--text); }
 .icon-btn.active { color: var(--state-listen); }
-.refresh-time { font-size: 11px; color: var(--text-tertiary); font-family: var(--font-mono); white-space: nowrap; }
+.refresh-time {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+.refresh-time:hover { background: var(--bg-hover); color: var(--text); }
 </style>
