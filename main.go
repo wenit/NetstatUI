@@ -22,7 +22,9 @@ func init() {
 }
 
 func main() {
-	if runtime.GOOS != "windows" && runtime.GOOS != "darwin" {
+	switch runtime.GOOS {
+	case "windows", "darwin", "linux":
+	default:
 		log.Fatalf("unsupported platform: %s", runtime.GOOS)
 	}
 	netstat.SetProvider(netstat.NewPlatformProvider())
