@@ -101,7 +101,7 @@ function emitUpdate() {
 .search {
   display: flex;
   align-items: center;
-  width: 200px;
+  width: 240px;
   flex-shrink: 0;
   height: 28px;
   background: var(--bg-active);
