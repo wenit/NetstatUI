@@ -148,7 +148,7 @@ sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev pkg-config
 │   ├── windows/info.json         # Windows 资源元信息
 │   └── darwin/Info.plist         # macOS bundle 元信息
 ├── build.ps1                     # Windows 安全构建（绕过文件锁）
-└── .github/workflows/build.yml   # CI：windows-amd64 + darwin-{arm64,amd64} + linux-amd64
+└── .github/workflows/build.yml   # CI：windows-amd64 + darwin-arm64（Intel macOS 通过 Rosetta 2 运行）
 ```
 
 ---

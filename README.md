@@ -148,7 +148,7 @@ See [`AGENTS.md` → Known pitfalls](./AGENTS.md#known-坑) for more.
 │   ├── windows/info.json         # Windows resource metadata
 │   └── darwin/Info.plist         # macOS bundle metadata
 ├── build.ps1                     # Safe Windows build (bypasses file-lock)
-└── .github/workflows/build.yml   # CI: windows-amd64 + darwin-{arm64,amd64} + linux-amd64
+└── .github/workflows/build.yml   # CI: windows-amd64 + darwin-arm64 (Intel macOS via Rosetta 2)
 ```
 
 ---

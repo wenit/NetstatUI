@@ -25,12 +25,6 @@ jobs:
           - target: darwin-arm64
             os: macos-latest
             artifact: NetstatUI-macos-arm64
-          - target: darwin-amd64
-            os: macos-13
-            artifact: NetstatUI-macos-amd64
-          - target: linux-amd64
-            os: ubuntu-latest
-            artifact: NetstatUI-linux-amd64
 
     steps:
       - name: Checkout
@@ -49,11 +43,9 @@ jobs:
           cache-dependency-path: 'frontend/package-lock.json'
 
       - name: Install Wails 3
-        if: matrix.os != 'ubuntu-latest'
         run: go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0-alpha.98
 
       - name: Generate TS bindings
-        if: matrix.os != 'ubuntu-latest'
         run: wails3 generate bindings -ts -clean=false
 
       - name: Install frontend deps
@@ -71,19 +63,7 @@ jobs:
           go build -tags production -ldflags="-w -s -H windowsgui" -o bin/${{ matrix.artifact }} .
 
       - name: Build (macOS)
-        if: matrix.os == 'macos-latest' || matrix.os == 'macos-13'
-        env:
-          GOOS: darwin
-          GOARCH: ${{ matrix.target == 'darwin-arm64' && 'arm64' || 'amd64' }}
-        run: |
-          mkdir -p bin
-          go build -tags production -ldflags="-w -s" -o bin/${{ matrix.artifact }} .
-
-      - name: Build (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        env:
-          GOOS: linux
-          GOARCH: amd64
+        if: matrix.os == 'macos-latest'
         run: |
           mkdir -p bin
           go build -tags production -ldflags="-w -s" -o bin/${{ matrix.artifact }} .
@@ -119,15 +99,11 @@ jobs:
         run: |
           cd dist
           mv windows-amd64/NetstatUI-windows-amd64.exe NetstatUI.exe
-          mv darwin-arm64/NetstatUI-macos-arm64 NetstatUI-macos-arm64
-          mv darwin-amd64/NetstatUI-macos-amd64 NetstatUI-macos-amd64-x64
-          mv linux-amd64/NetstatUI-linux-amd64 NetstatUI-linux-amd64
-          chmod +x NetstatUI-macos-arm64 NetstatUI-macos-amd64-x64 NetstatUI-linux-amd64
+          mv darwin-arm64/NetstatUI-macos-arm64 NetstatUI
+          chmod +x NetstatUI
           zip -j NetstatUI-windows-amd64.zip NetstatUI.exe
-          zip -j NetstatUI-macos-arm64.zip NetstatUI-macos-arm64
-          zip -j NetstatUI-macos-amd64.zip NetstatUI-macos-amd64-x64
-          zip -j NetstatUI-linux-amd64.zip NetstatUI-linux-amd64
-          rm -rf windows-amd64 darwin-arm64 darwin-amd64 linux-amd64
+          zip -j NetstatUI-macos-arm64.zip NetstatUI
+          rm -rf windows-amd64 darwin-arm64
           ls -lah
 
       - name: Create GitHub release
