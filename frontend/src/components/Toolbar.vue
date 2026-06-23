@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useSettingsStore } from '../stores/settings'
 import { refreshNow, setIntervalMs, startMonitor, stopMonitor } from '../composables/useConnections'
 import { useI18n } from 'vue-i18n'
@@ -18,10 +18,16 @@ const intervals = [
 
 const paused = computed(() => !settings.running)
 const spinning = ref(false)
+const timeFlash = ref(false)
 
 const timeStr = computed(() =>
   new Date(props.lastRefreshedAt).toLocaleTimeString(settings.locale, { hour: '2-digit', minute: '2-digit', second: '2-digit' })
 )
+
+watch(() => props.lastRefreshedAt, () => {
+  timeFlash.value = true
+  setTimeout(() => { timeFlash.value = false }, 600)
+})
 
 async function pickInterval(ms: number) {
   settings.setInterval(ms)
@@ -76,7 +82,7 @@ async function doRefresh() {
           <path d="M12 2v3h-3" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round" />
         </svg>
       </button>
-      <span class="refresh-time">{{ t('toolbar.refreshTime') }}{{ timeStr }}</span>
+      <span class="refresh-time" :class="{ flash: timeFlash }">{{ t('toolbar.refreshTime') }}{{ timeStr }}</span>
     </div>
     <div class="right">
       <slot />
@@ -137,5 +143,20 @@ async function doRefresh() {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
-.refresh-time { font-size: 11px; color: var(--text-tertiary); font-family: var(--font-mono); white-space: nowrap; }
+.refresh-time {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  padding: 0 4px;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition-fast);
+}
+.refresh-time.flash {
+  animation: flash 0.6s ease-out;
+}
+@keyframes flash {
+  0% { color: var(--accent); }
+  100% { color: var(--text-tertiary); }
+}
 </style>
