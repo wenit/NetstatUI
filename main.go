@@ -25,7 +25,7 @@ func main() {
 	cache := process.NewCache()
 
 	app := application.New(application.Options{
-		Name:        "network-ports",
+		Name:        "NetstatUI",
 		Description: "Network port and connection inspector",
 		Services: []application.Service{
 			application.NewService(NewAppService(cache)),
@@ -37,7 +37,7 @@ func main() {
 	})
 
 	app.Window.NewWithOptions(application.WebviewWindowOptions{
-		Title:          "Network Ports",
+		Title:          "NetstatUI",
 		Frameless:      true,
 		Width:          1200,
 		Height:         760,

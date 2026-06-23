@@ -24,7 +24,7 @@ async function close() {
     <div class="drag" />
     <div class="brand">
       <span class="brand-icon" />
-      <span class="brand-text">Network Ports</span>
+      <span class="brand-text">NetstatUI</span>
     </div>
     <div class="spacer" />
     <button class="tb-btn settings" :title="t('titlebar.settings')" @click="emit('open-settings')">

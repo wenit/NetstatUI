@@ -6,8 +6,8 @@ version: '3'
 # This information is used to generate the build assets.
 info:
   companyName: "zwb" # The name of the company
-  productName: "Network Ports" # The name of the application
-  productIdentifier: "com.zwb.networkports" # The unique product identifier
+  productName: "NetstatUI" # The name of the application
+  productIdentifier: "com.zwb.netstatui" # The unique product identifier
   description: "Network port and connection inspector" # The application description
   copyright: "(c) 2026, zwb" # Copyright text
   comments: "Win11 Fluent netstat-like desktop tool" # Comments

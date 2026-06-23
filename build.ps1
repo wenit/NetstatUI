@@ -20,10 +20,10 @@ if ($LASTEXITCODE -ne 0) { Pop-Location; throw "frontend build failed" }
 Pop-Location
 
 Write-Host "[3/3] go build (backend production)..." -ForegroundColor Cyan
-& go build -tags production -ldflags="-w -s -H windowsgui" -o bin/network-ports.exe .
+& go build -tags production -ldflags="-w -s -H windowsgui" -o bin/NetstatUI.exe .
 if ($LASTEXITCODE -ne 0) { throw "backend build failed" }
 
-$exe = Join-Path $root "bin/network-ports.exe"
+$exe = Join-Path $root "bin/NetstatUI.exe"
 if (Test-Path $exe) {
     $size = [math]::Round((Get-Item $exe).Length / 1MB, 2)
     Write-Host "OK build succeeded: $exe ($size MB)" -ForegroundColor Green
