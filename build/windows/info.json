@@ -6,7 +6,7 @@
 		"0000": {
 			"ProductVersion": "0.3.1",
 			"CompanyName": "wenit",
-			"FileDescription": "A graphical user interface for the netstat command",
+			"FileDescription": "NetstatUI",
 			"LegalCopyright": "© 2026, wenit",
 			"ProductName": "NetstatUI",
 			"Comments": "Win11 Fluent netstat-like desktop tool"
