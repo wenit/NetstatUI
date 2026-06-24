@@ -110,6 +110,39 @@ SmartScreen remembers the file's hash for that machine, so subsequent launches o
 
 If you want to suppress the warning permanently without buying a certificate, see the [Windows build guide](./README.md#build-from-source) and sign the binary yourself with `signtool sign /a` (self-signed certs still trigger SmartScreen, but at least the publisher name shows). For production releases, an [EV code-signing certificate from DigiCert / Sectigo](https://learn.microsoft.com/en-us/windows/security/identity-protection/access-control/access-control) is the only path to a SmartScreen-clean app.
 
+### First run on macOS (Gatekeeper)
+
+The published `NetstatUI` binary (or the `.app` bundle inside `NetstatUI.app`) is **not signed with an Apple Developer ID and not notarised** (the Apple Developer Program costs $99/year, and the project is currently distributed free of charge). As a result, macOS shows a **Gatekeeper** warning the first time the app is launched from a fresh machine:
+
+> "NetstatUI cannot be opened because the developer cannot be verified."
+> / "NetstatUI is from an unidentified developer."
+
+This is **not malware detection** — it is purely a reputation-based warning for apps without a Developer ID signature. There are three ways to open it:
+
+**Method 1 — Finder (GUI, recommended for most users):**
+1. Locate `NetstatUI` in Finder.
+2. **Right-click** (or Ctrl-click) the icon, choose **Open** from the context menu.
+3. In the new dialog, click **Open**.
+
+After that, macOS remembers your choice and a normal double-click will work going forward.
+
+**Method 2 — System Settings (if double-click is blocked first):**
+1. Try to open `NetstatUI` — it gets blocked with a generic dialog.
+2. Open **System Settings → Privacy & Security**.
+3. Scroll down — you'll see a section "NetstatUI was blocked from opening because it is not from an identified developer."
+4. Click **Open Anyway**, then confirm with your Touch ID / password.
+
+**Method 3 — CLI one-liner (for terminal users):**
+
+```bash
+xattr -d com.apple.quarantine /path/to/NetstatUI
+./NetstatUI
+```
+
+`xattr -d com.apple.quarantine` removes the `com.apple.quarantine` extended attribute that macOS attaches to files downloaded from the internet. After this, Gatekeeper no longer flags the binary. (If the file isn't from a browser / curl, this attribute may not be present and the command will error — in that case use Method 1 or 2.)
+
+If you want to suppress the warning permanently without joining the Developer Program, you can sign the binary yourself with `codesign --sign - NetstatUI` (ad-hoc signing still triggers Gatekeeper on first run, but at least the prompt is slightly less alarming). For production releases, an [Apple Developer ID + `notarytool` notarisation](https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution) is the only path to a Gatekeeper-clean app.
+
 ### Settings
 
 Open the **⚙ Settings** dialog from the title bar:
@@ -129,8 +162,8 @@ Open the **⚙ Settings** dialog from the title bar:
 
 ### Platform-specific notes
 
-- **Windows** — Mica backdrop requires Windows 11 build 22621+. On older Windows the window uses an opaque background.
-- **macOS** — first launch may prompt for Accessibility / Full Disk Access permissions (gopsutil reads process info via `libproc`).
+- **Windows** — Mica backdrop requires Windows 11 build 22621+. On older Windows the window uses an opaque background. See [First run on Windows (SmartScreen)](./README.md#first-run-on-windows-smartscreen) above for the unsigned-binary warning.
+- **macOS** — first launch may prompt for Accessibility / Full Disk Access permissions (gopsutil reads process info via `libproc`). See [First run on macOS (Gatekeeper)](./README.md#first-run-on-macos-gatekeeper) above for the unsigned-binary warning.
 - **Linux** — non-root users cannot see PIDs of sockets owned by other users (kernel restriction); run `sudo ./NetstatUI` for full visibility.
 
 The architecture is pluggable: `services/netstat/`, `services/process/`, `services/kill/`, `services/system/` each define one `*_<os>.go` file per supported OS, selected at compile time via `//go:build` tags. Adding a new platform = `netstat_<os>.go` + `process_<os>.go` + `kill_<os>.go` + `system_<os>.go` + `netstat_platform_<os>.go` + entry in `main.go`'s `switch runtime.GOOS`.
@@ -142,6 +175,7 @@ The architecture is pluggable: `services/netstat/`, `services/process/`, `servic
 - **Some loopback listeners may be missing on Windows 11 22H2+** — `iphlpapi.dll`'s `GetTcpTable2` / `GetExtendedUdpTable` silently drop a subset of `127.0.0.1` LISTEN entries. `netstat -ano` shows them because it uses WMI; we go through the same iphlpapi path as gopsutil, so the same limitation applies.
 - **Mica backdrop is Windows-only** — the frameless translucent window falls back to an opaque background on macOS/Linux.
 - **SmartScreen warning on first run (Windows)** — the published binary is not signed with a paid EV/OV certificate; see [First run on Windows](./README.md#first-run-on-windows-smartscreen) above.
+- **Gatekeeper warning on first run (macOS)** — the published binary is not signed with an Apple Developer ID and not notarised; see [First run on macOS](./README.md#first-run-on-macos-gatekeeper) above.
 
 See [`AGENTS.md` → Known pitfalls](./AGENTS.md#known-坑) for more.
 
