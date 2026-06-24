@@ -60,13 +60,11 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-          go build -tags production -ldflags="-w -s -H windowsgui" -o bin/${{ matrix.artifact }} .
+          wails3 build -clean=false
 
       - name: Build (macOS)
         if: matrix.os == 'macos-latest'
-        run: |
-          mkdir -p bin
-          go build -tags production -ldflags="-w -s" -o bin/${{ matrix.artifact }} .
+        run: wails3 build -clean=false
 
       - name: Show binary
         shell: bash
@@ -98,8 +96,8 @@ jobs:
         shell: bash
         run: |
           cd dist
-          mv windows-amd64/NetstatUI-windows-amd64.exe NetstatUI.exe
-          mv darwin-arm64/NetstatUI-macos-arm64 NetstatUI
+          mv windows-amd64/NetstatUI.exe NetstatUI.exe
+          mv darwin-arm64/NetstatUI NetstatUI
           chmod +x NetstatUI
           zip -j NetstatUI-windows-amd64.zip NetstatUI.exe
           zip -j NetstatUI-macos-arm64.zip NetstatUI
