@@ -99,6 +99,8 @@ sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev pkg-config
 
 发布的 `NetstatUI.exe` **未使用付费证书签名**（EV/OV 代码签名证书年费 $300–500，本项目目前免费分发），因此 Windows 10/11 在全新机器上首次启动时会弹一个 **Microsoft Defender SmartScreen** 警告：
 
+![SmartScreen 警告](./docs/windows-warning.png)
+
 > "Windows 已保护你的电脑 — Microsoft Defender SmartScreen 阻止了无法识别的应用启动。"
 
 这**不是病毒检测**，只是对未签名 exe 基于"信誉"的提示。运行方法：

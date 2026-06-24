@@ -99,6 +99,8 @@ For older distributions that ship `libwebkit2gtk-4.0`, replace `4.1` with `4.0` 
 
 The published `NetstatUI.exe` is **not code-signed with a paid certificate** (an EV/OV signing cert costs $300–500/year, and the project is currently distributed free of charge). As a result, Windows 10/11 shows a **Microsoft Defender SmartScreen** warning the first time the binary is launched from a fresh machine:
 
+![SmartScreen warning](./docs/windows-warning.png)
+
 > "Windows protected your PC — Microsoft Defender SmartScreen prevented an unrecognized app from starting."
 
 This is **not malware detection** — it is purely a reputation-based warning for unsigned executables. To run the app:
