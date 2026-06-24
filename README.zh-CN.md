@@ -95,6 +95,21 @@ sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev pkg-config
 5. 单击行打开 **DetailPanel**（完整进程信息 + 打开所在文件夹）。
 6. 右键弹出上下文菜单 —— **结束进程** 会弹出确认弹框。
 
+### Windows 首次运行（SmartScreen 警告）
+
+发布的 `NetstatUI.exe` **未使用付费证书签名**（EV/OV 代码签名证书年费 $300–500，本项目目前免费分发），因此 Windows 10/11 在全新机器上首次启动时会弹一个 **Microsoft Defender SmartScreen** 警告：
+
+> "Windows 已保护你的电脑 — Microsoft Defender SmartScreen 阻止了无法识别的应用启动。"
+
+这**不是病毒检测**，只是对未签名 exe 基于"信誉"的提示。运行方法：
+
+1. 在 SmartScreen 弹框里点 **更多信息**。
+2. 展开后会出现 **仍要运行** 按钮 —— 点击即可启动。
+
+SmartScreen 会记住该 exe 的哈希值，同一台机器上再次启动**同一份** `NetstatUI.exe` 不会再弹。换成新版本又会弹一次。
+
+如果想永久消除警告（且不花钱买证书），可以参考 [从源码构建](./README.zh-CN.md#从源码构建) 自行用 `signtool sign /a` 签名（自签名证书依然会触发 SmartScreen，但至少能显示发布者名称）。要彻底干净地发布，正式做法是申请 [DigiCert / Sectigo 的 EV 代码签名证书](https://learn.microsoft.com/zh-cn/windows/security/identity-protection/access-control/access-control)。
+
 ### 设置
 
 点击标题栏的 **⚙ Settings**：
@@ -126,6 +141,7 @@ sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev pkg-config
 
 - **Windows 11 22H2+ 上部分 loopback listener 可能缺失** —— `iphlpapi.dll` 的 `GetTcpTable2` / `GetExtendedUdpTable` 会静默丢弃一部分 `127.0.0.1` LISTEN 连接。`netstat -ano` 用的是 WMI 路径所以能看到；本工具与 gopsutil 走相同 iphlpapi 路径，存在同样限制。
 - **Mica 毛玻璃仅 Windows** — 无边框半透明窗口在 macOS / Linux 上回退为纯色背景。
+- **Windows 首次运行 SmartScreen 警告** — 发布的二进制未用付费 EV/OV 证书签名；详见上文 [Windows 首次运行（SmartScreen 警告）](./README.zh-CN.md#windows-首次运行smartscreen-警告)。
 
 更多见 [`AGENTS.md` → 已知坑](./AGENTS.md#已知坑)。
 

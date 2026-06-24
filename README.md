@@ -95,6 +95,21 @@ For older distributions that ship `libwebkit2gtk-4.0`, replace `4.1` with `4.0` 
 5. Click a row to open the **DetailPanel** (full process info + open-folder action).
 6. Right-click for the context menu — **Kill process** raises a confirmation dialog.
 
+### First run on Windows (SmartScreen)
+
+The published `NetstatUI.exe` is **not code-signed with a paid certificate** (an EV/OV signing cert costs $300–500/year, and the project is currently distributed free of charge). As a result, Windows 10/11 shows a **Microsoft Defender SmartScreen** warning the first time the binary is launched from a fresh machine:
+
+> "Windows protected your PC — Microsoft Defender SmartScreen prevented an unrecognized app from starting."
+
+This is **not malware detection** — it is purely a reputation-based warning for unsigned executables. To run the app:
+
+1. In the SmartScreen dialog, click **More info** ("更多信息").
+2. A **Run anyway** ("仍要运行") button appears — click it.
+
+SmartScreen remembers the file's hash for that machine, so subsequent launches of the **same** `NetstatUI.exe` will not prompt again. If you replace the binary with a newer build, you'll see the dialog once more.
+
+If you want to suppress the warning permanently without buying a certificate, see the [Windows build guide](./README.md#build-from-source) and sign the binary yourself with `signtool sign /a` (self-signed certs still trigger SmartScreen, but at least the publisher name shows). For production releases, an [EV code-signing certificate from DigiCert / Sectigo](https://learn.microsoft.com/en-us/windows/security/identity-protection/access-control/access-control) is the only path to a SmartScreen-clean app.
+
 ### Settings
 
 Open the **⚙ Settings** dialog from the title bar:
@@ -126,6 +141,7 @@ The architecture is pluggable: `services/netstat/`, `services/process/`, `servic
 
 - **Some loopback listeners may be missing on Windows 11 22H2+** — `iphlpapi.dll`'s `GetTcpTable2` / `GetExtendedUdpTable` silently drop a subset of `127.0.0.1` LISTEN entries. `netstat -ano` shows them because it uses WMI; we go through the same iphlpapi path as gopsutil, so the same limitation applies.
 - **Mica backdrop is Windows-only** — the frameless translucent window falls back to an opaque background on macOS/Linux.
+- **SmartScreen warning on first run (Windows)** — the published binary is not signed with a paid EV/OV certificate; see [First run on Windows](./README.md#first-run-on-windows-smartscreen) above.
 
 See [`AGENTS.md` → Known pitfalls](./AGENTS.md#known-坑) for more.
 
