@@ -3,6 +3,7 @@ module github.com/wenit/NetstatUI
 go 1.25.0
 
 require (
+	github.com/lionsoul2014/ip2region/binding/golang v0.0.0-20260623020923-1068bf05a315
 	github.com/shirou/gopsutil/v3 v3.24.5
 	github.com/wailsapp/wails/v3 v3.0.0-alpha.98
 	golang.org/x/sys v0.43.0

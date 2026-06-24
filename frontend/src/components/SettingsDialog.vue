@@ -26,7 +26,7 @@ const themes: { value: Theme; labelKey: string }[] = [
 
 const cleared = ref(false)
 
-const cacheKeys = ['np.locale', 'np.theme', 'np.interval', 'np.running']
+const cacheKeys = ['np.locale', 'np.theme', 'np.interval', 'np.running', 'np.geo']
 
 function cacheValue(key: string): string {
   return localStorage.getItem(key) ?? '(not set)'
@@ -87,6 +87,22 @@ onUnmounted(() => document.removeEventListener('keydown', onKey))
                   :class="{ active: settings.theme === th.value }"
                   @click="settings.setTheme(th.value)"
                 >{{ t(th.labelKey) }}</button>
+              </div>
+            </div>
+            <div class="section">
+              <div class="sec-title">{{ t('settings.geo') }}</div>
+              <p class="desc">{{ t('settings.geoDesc') }}</p>
+              <div class="options">
+                <button
+                  class="opt"
+                  :class="{ active: settings.geo }"
+                  @click="settings.setGeo(true)"
+                >{{ t('settings.geoOn') }}</button>
+                <button
+                  class="opt"
+                  :class="{ active: !settings.geo }"
+                  @click="settings.setGeo(false)"
+                >{{ t('settings.geoOff') }}</button>
               </div>
             </div>
           </div>

@@ -35,7 +35,7 @@ export function applyFilter(conns: Map<string, ConnRow>, f: FilterState): ConnRo
     if (f.listenOnly && c.state !== ('LISTEN' as State)) continue
     if (f.externalOnly && isLocal(c.remoteAddr)) continue
     if (q) {
-      const hay = `${c.protocol} ${c.localAddr} ${c.localPort} ${c.remoteAddr} ${c.remotePort} ${c.state} ${c.pid} ${c.processName}`.toLowerCase()
+      const hay = `${c.protocol} ${c.localAddr} ${c.localPort} ${c.remoteAddr} ${c.remotePort} ${c.state} ${c.pid} ${c.processName} ${c.geo || ''}`.toLowerCase()
       if (!hay.includes(q)) continue
     }
     out.push(c)

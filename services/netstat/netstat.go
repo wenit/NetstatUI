@@ -28,16 +28,17 @@ const (
 )
 
 type ConnInfo struct {
-	Key        string   `json:"key"`
-	Protocol   Protocol `json:"protocol"`
-	LocalAddr  string   `json:"localAddr"`
-	LocalPort  uint16   `json:"localPort"`
-	RemoteAddr string   `json:"remoteAddr"`
-	RemotePort uint16   `json:"remotePort"`
-	State      State    `json:"state"`
-	PID        uint32   `json:"pid"`
-	ProcessName string  `json:"processName"`
-	ProcessPath string  `json:"processPath"`
+	Key         string   `json:"key"`
+	Protocol    Protocol `json:"protocol"`
+	LocalAddr   string   `json:"localAddr"`
+	LocalPort   uint16   `json:"localPort"`
+	RemoteAddr  string   `json:"remoteAddr"`
+	RemotePort  uint16   `json:"remotePort"`
+	State       State    `json:"state"`
+	PID         uint32   `json:"pid"`
+	ProcessName string   `json:"processName"`
+	ProcessPath string   `json:"processPath"`
+	Geo         string   `json:"geo"`
 }
 
 type Snapshot struct {

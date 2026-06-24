@@ -10,6 +10,7 @@ interface SettingsState {
   intervalMs: number
   running: boolean
   density: 'compact' | 'comfortable'
+  geo: boolean
 }
 
 export function resolveTheme(t: Theme): ResolvedTheme {
@@ -33,6 +34,7 @@ export const useSettingsStore = defineStore('settings', {
     intervalMs: Number(localStorage.getItem('np.interval')) || 5000,
     running: localStorage.getItem('np.running') === '1',
     density: 'comfortable',
+    geo: localStorage.getItem('np.geo') !== '0',
   }),
   getters: {
     resolvedTheme(state): ResolvedTheme {
@@ -60,6 +62,10 @@ export const useSettingsStore = defineStore('settings', {
     setRunning(r: boolean) {
       this.running = r
       localStorage.setItem('np.running', r ? '1' : '0')
+    },
+    setGeo(v: boolean) {
+      this.geo = v
+      localStorage.setItem('np.geo', v ? '1' : '0')
     },
   },
 })

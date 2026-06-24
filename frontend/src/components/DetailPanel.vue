@@ -8,8 +8,10 @@ import type { Info } from '../../bindings/github.com/wenit/NetstatUI/services/pr
 import { showError } from '../composables/useErrorDialog'
 import { showConfirm } from '../composables/useConfirmDialog'
 import { refreshNow } from '../composables/useConnections'
+import { useSettingsStore } from '../stores/settings'
 
 const { t } = useI18n()
+const settings = useSettingsStore()
 
 const props = defineProps<{ row: ConnRow | null }>()
 const emit = defineEmits<{ close: [] }>()
@@ -58,6 +60,9 @@ async function openFolder() {
             <span class="k">{{ t('detail.protocol') }}</span><span class="v mono">{{ row.protocol }}</span>
             <span class="k">{{ t('detail.local') }}</span><span class="v mono">{{ row.localAddr }}:{{ row.localPort }}</span>
             <span class="k">{{ t('detail.remote') }}</span><span class="v mono">{{ row.remoteAddr || '*' }}{{ row.remotePort ? ':' + row.remotePort : '' }}</span>
+            <template v-if="settings.geo">
+              <span class="k">{{ t('detail.geo') }}</span><span class="v">{{ row.geo || '—' }}</span>
+            </template>
             <span class="k">{{ t('detail.state') }}</span><span class="v"><span class="state-pill">{{ row.state }}</span></span>
           </div>
         </div>

@@ -16,6 +16,7 @@ export class ConnInfo {
     "pid": number;
     "processName": string;
     "processPath": string;
+    "geo": string;
 
     /** Creates a new ConnInfo instance. */
     constructor($$source: Partial<ConnInfo> = {}) {
@@ -48,6 +49,9 @@ export class ConnInfo {
         }
         if (!("processPath" in $$source)) {
             this["processPath"] = "";
+        }
+        if (!("geo" in $$source)) {
+            this["geo"] = "";
         }
 
         Object.assign(this, $$source);

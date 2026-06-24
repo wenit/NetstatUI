@@ -8,8 +8,10 @@ import type { State } from '../../bindings/github.com/wenit/NetstatUI/services/n
 import { showError } from '../composables/useErrorDialog'
 import { showConfirm } from '../composables/useConfirmDialog'
 import { refreshNow } from '../composables/useConnections'
+import { useSettingsStore } from '../stores/settings'
 
 const { t } = useI18n()
+const settings = useSettingsStore()
 
 const props = defineProps<{
   rows: ConnRow[]
@@ -22,7 +24,7 @@ const emit = defineEmits<{
   contextmenu: [event: MouseEvent, row: ConnRow]
 }>()
 
-type SortKey = 'protocol' | 'localAddr' | 'localPort' | 'remoteAddr' | 'remotePort' | 'state' | 'pid' | 'processName'
+type SortKey = 'protocol' | 'localAddr' | 'localPort' | 'remoteAddr' | 'remotePort' | 'state' | 'pid' | 'processName' | 'geo'
 const sortKey = ref<SortKey>('localPort')
 const sortDesc = ref(false)
 
@@ -59,6 +61,7 @@ const sorted = computed(() => {
       case 'state': r = a.state.localeCompare(b.state); break
       case 'pid': r = a.pid - b.pid; break
       case 'processName': r = (a.processName || '').localeCompare(b.processName || ''); break
+      case 'geo': r = (a.geo || '').localeCompare(b.geo || ''); break
     }
     return desc ? -r : r
   })
@@ -151,6 +154,12 @@ watch(() => props.rows, () => {
     scrollTop.value = 0
   }
 })
+watch(() => settings.geo, () => {
+  if (containerEl.value) {
+    containerEl.value.scrollTop = 0
+    scrollTop.value = 0
+  }
+})
 </script>
 
 <template>
@@ -167,6 +176,9 @@ watch(() => props.rows, () => {
       </div>
       <div class="th flex" @click="toggleSort('remoteAddr')">
         {{ t('table.colRemoteAddr') }}<span class="arrow" :class="{ show: sortKey==='remoteAddr', desc: sortDesc }">▾</span>
+      </div>
+      <div v-if="settings.geo" class="th geo" @click="toggleSort('geo')">
+        {{ t('table.colGeo') }}<span class="arrow" :class="{ show: sortKey==='geo', desc: sortDesc }">▾</span>
       </div>
       <div class="th port" @click="toggleSort('remotePort')">
         {{ t('table.colRemotePort') }}<span class="arrow" :class="{ show: sortKey==='remotePort', desc: sortDesc }">▾</span>
@@ -198,6 +210,7 @@ watch(() => props.rows, () => {
           <div class="td flex mono">{{ v.row.localAddr }}</div>
           <div class="td port mono">{{ v.row.localPort }}</div>
           <div class="td flex mono">{{ v.row.remoteAddr || '*' }}<span v-if="v.row.remotePort" class="dim">:{{ v.row.remotePort }}</span></div>
+          <div v-if="settings.geo" class="td geo" :title="v.row.geo || ''">{{ v.row.geo || '—' }}</div>
           <div class="td port mono">{{ v.row.remotePort || '—' }}</div>
           <div class="td state"><span class="dot" :style="{ background: stateColor(v.row.state) }" />{{ v.row.state }}</div>
           <div class="td pid mono">{{ v.row.pid || '—' }}</div>
@@ -283,6 +296,8 @@ watch(() => props.rows, () => {
 .td.protocol.tcp4, .td.protocol.tcp6 { color: var(--state-syn); }
 .td.protocol.udp4, .td.protocol.udp6 { color: var(--state-listen); }
 .td.port { width: 72px; justify-content: flex-end; }
+.td.geo { width: 160px; color: var(--text-tertiary); font-size: 11.5px; }
+.th.geo { width: 160px; }
 .td.state { width: 120px; gap: 6px; font-size: 11px; }
 .td.state .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 .td.pid { width: 76px; justify-content: flex-end; }

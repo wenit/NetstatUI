@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
+	"github.com/wenit/NetstatUI/services/geo"
 	"github.com/wenit/NetstatUI/services/netstat"
 	"github.com/wenit/NetstatUI/services/process"
 )
@@ -27,6 +28,7 @@ type Diff struct {
 
 type Monitor struct {
 	cache     *process.Cache
+	geo       *geo.Resolver
 	interval  time.Duration
 	mu        sync.Mutex
 	last      map[string]netstat.ConnInfo
@@ -36,9 +38,10 @@ type Monitor struct {
 	lastStats Stats
 }
 
-func New(cache *process.Cache) *Monitor {
+func New(cache *process.Cache, g *geo.Resolver) *Monitor {
 	return &Monitor{
 		cache:    cache,
+		geo:      g,
 		interval: 2 * time.Second,
 		last:     make(map[string]netstat.ConnInfo),
 		stopCh:   make(chan struct{}),
@@ -212,6 +215,9 @@ func (m *Monitor) collect() ([]netstat.ConnInfo, Stats, error) {
 		if info, ok := procs[conns[i].PID]; ok {
 			conns[i].ProcessName = info.Name
 			conns[i].ProcessPath = info.Path
+		}
+		if m.geo != nil {
+			conns[i].Geo = m.geo.Lookup(conns[i].RemoteAddr)
 		}
 	}
 	stats := computeStats(conns)

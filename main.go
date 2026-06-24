@@ -6,6 +6,7 @@ import (
 	"runtime"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
+	"github.com/wenit/NetstatUI/services/geo"
 	"github.com/wenit/NetstatUI/services/monitor"
 	"github.com/wenit/NetstatUI/services/netstat"
 	"github.com/wenit/NetstatUI/services/process"
@@ -13,6 +14,9 @@ import (
 
 //go:embed all:frontend/dist
 var assets embed.FS
+
+//go:embed all:data
+var geoData embed.FS
 
 func init() {
 	application.RegisterEvent[[]netstat.ConnInfo]("conn:full")
@@ -30,12 +34,19 @@ func main() {
 	netstat.SetProvider(netstat.NewPlatformProvider())
 	cache := process.NewCache()
 
+	geoResolver, err := geo.New(geoData)
+	if err != nil {
+		log.Printf("geo: init failed (geo lookup disabled): %v", err)
+	} else {
+		defer geoResolver.Close()
+	}
+
 	app := application.New(application.Options{
 		Name:        "NetstatUI",
 		Description: "A graphical user interface for the netstat command",
 		Services: []application.Service{
 			application.NewService(NewAppService(cache)),
-			application.NewService(monitor.New(cache)),
+			application.NewService(monitor.New(cache, geoResolver)),
 		},
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),
@@ -56,8 +67,7 @@ func main() {
 		URL: "/",
 	})
 
-	err := app.Run()
-	if err != nil {
+	if err := app.Run(); err != nil {
 		log.Fatal(err)
 	}
 }
