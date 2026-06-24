@@ -10,7 +10,19 @@ NetstatUI 把操作系统自带的 `netstat` 机制 —— 套接字、端口、
 
 ---
 
+## 截图
+
+| 暗色 | 亮色 |
+|:----:|:----:|
+| ![Dark](./docs/main-dark.png) | ![Light](./docs/main-light.png) |
+
+远程 IP 地理位置（`国家-城市`）显示在"远程地址"列右侧。开关位于 **设置 → 通用 → IP 地理位置**（`np.geo`）。
+
+---
+
 ## 核心特性
+
+- 🌍 **IP 地理位置** — 远程地址列直接显示 `国家-城市`（如 `中国-杭州`），基于离线 [ip2region](https://github.com/lionsoul2014/ip2region) 库；xdb 内嵌进二进制，无需联网。
 
 - 📡 **全量可见** — 涵盖 TCP4 / TCP6 / UDP4 / UDP6，每条连接展示本地 + 远端地址、状态、PID 与解析后的进程路径。
 - 🖥️ **一套代码，三端运行** — Windows 10/11、macOS 12+、Linux（WebKitGTK）。所有功能在三端完全一致。
@@ -20,7 +32,7 @@ NetstatUI 把操作系统自带的 `netstat` 机制 —— 套接字、端口、
 - 🪓 **一键结束进程** — 确认弹框 → `TerminateProcess`（Windows）/ `SIGKILL`（macOS/Linux），结束后立即自动刷新。
 - 🎨 **自适应主题** — 明亮 / 暗黑 / 自动（跟随系统），Win11 22621+ 上启用 Mica 毛玻璃，密度支持紧凑 / 舒适两种。
 - 🌍 **中英双语 UI** — 默认英文 / 简体中文，OS locale 自动识别。
-- 💾 **设置持久化** — 主题 / 语言 / 刷新间隔 / 运行状态全部写入 localStorage（`np.*` 前缀）。
+- 💾 **设置持久化** — 主题 / 语言 / 刷新间隔 / 运行状态 / 地理位置开关全部写入 localStorage（`np.*` 前缀）。
 
 ---
 
@@ -87,7 +99,7 @@ sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev pkg-config
 
 点击标题栏的 **⚙ Settings**：
 
-- **通用** —— 主题（auto / light / dark）、语言（English / 简体中文）、密度（紧凑 / 舒适）、刷新间隔。
+- **通用** —— 主题（auto / light / dark）、语言（English / 简体中文）、**IP 地理位置（显示 / 隐藏）**、密度（紧凑 / 舒适）、刷新间隔。
 - **高级** —— 清除 localStorage 一键重置。
 
 ---
@@ -132,9 +144,12 @@ sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev pkg-config
 │   │   ├── netstat_darwin.go     # gopsutil 包装
 │   │   └── netstat_linux.go      # gopsutil 包装
 │   ├── process/                  # PID → 名称 / 路径 缓存（三端 gopsutil）
-│   ├── monitor/                  # 轮询、diff、事件发射
+│   ├── monitor/                  # 轮询、diff、事件发射、地理查询
+│   ├── geo/                      # IP → 国家-城市（ip2region xdb，内嵌）
 │   ├── kill/                     # 杀进程（Win 走 TerminateProcess，Unix 走 SIGKILL，统一 gopsutil）
 │   └── system/                   # GetSystemLocale（注册表 / osascript / $LANG）
+├── data/                         # ip2region xdb 文件（已 gitignore，通过 scripts/download-xdb.ps1 拉取）
+├── scripts/                      # download-xdb.ps1
 ├── frontend/
 │   ├── bindings/                 # 生成物 —— wails3 generate bindings -ts
 │   └── src/

@@ -10,7 +10,19 @@ Built on **Wails 3** + **Vue 3**, with **gopsutil/v3** as a unified cross-platfo
 
 ---
 
+## Screenshots
+
+| Dark | Light |
+|:----:|:-----:|
+| ![Dark](./docs/main-dark.png) | ![Light](./docs/main-light.png) |
+
+Remote IP geolocation (`Country-City`) is shown right of the remote address column. Toggle in **Settings → General → IP Geolocation** (`np.geo`).
+
+---
+
 ## Highlights
+
+- 🌍 **IP geolocation** — remote address column shows `Country-City` (e.g. `中国-杭州`) via offline [ip2region](https://github.com/lionsoul2014/ip2region). Embedded xdb, no network calls.
 
 - 📡 **Full visibility** — every TCP4 / TCP6 / UDP4 / UDP6 socket, with local + remote endpoints, state, PID and resolved process path.
 - 🖥️ **Three platforms, one codebase** — Windows 10/11, macOS 12+, and Linux (WebKitGTK). All features work identically across the trio.
@@ -20,7 +32,7 @@ Built on **Wails 3** + **Vue 3**, with **gopsutil/v3** as a unified cross-platfo
 - 🪓 **One-click kill** — confirm dialog → `TerminateProcess` (Windows) / `SIGKILL` (macOS/Linux); auto-refresh immediately afterwards.
 - 🎨 **Adaptive theming** — light / dark / auto (follows OS), Mica backdrop on Windows 11 22621+, compact & comfortable density.
 - 🌍 **Bilingual UI** — English (default) / Simplified Chinese, with OS-locale auto-detection.
-- 💾 **Persistent settings** — theme, locale, interval, running state stored in localStorage (`np.*` keys).
+- 💾 **Persistent settings** — theme, locale, interval, running state, geo toggle stored in localStorage (`np.*` keys).
 
 ---
 
@@ -87,7 +99,7 @@ For older distributions that ship `libwebkit2gtk-4.0`, replace `4.1` with `4.0` 
 
 Open the **⚙ Settings** dialog from the title bar:
 
-- **General** — theme (auto / light / dark), locale (English / 简体中文), density (compact / comfortable), refresh interval.
+- **General** — theme (auto / light / dark), locale (English / 简体中文), **IP geolocation (show / hide)**, density (compact / comfortable), refresh interval.
 - **Advanced** — clear localStorage to reset everything.
 
 ---
@@ -132,9 +144,12 @@ See [`AGENTS.md` → Known pitfalls](./AGENTS.md#known-坑) for more.
 │   │   ├── netstat_darwin.go     # gopsutil wrapper
 │   │   └── netstat_linux.go      # gopsutil wrapper
 │   ├── process/                  # PID → name/path cache (gopsutil on all OS)
-│   ├── monitor/                  # Polling, diff, Wails event emit
+│   ├── monitor/                  # Polling, diff, Wails event emit, geo lookup
+│   ├── geo/                      # IP → Country-City via ip2region xdb (embedded)
 │   ├── kill/                     # TerminateProcess (Win) / SIGKILL (Unix) via gopsutil
 │   └── system/                   # GetSystemLocale (registry / osascript / $LANG)
+├── data/                         # ip2region xdb files (gitignored, downloaded via scripts/download-xdb.ps1)
+├── scripts/                      # download-xdb.ps1
 ├── frontend/
 │   ├── bindings/                 # GENERATED — wails3 generate bindings -ts
 │   └── src/
