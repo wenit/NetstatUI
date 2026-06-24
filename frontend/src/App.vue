@@ -122,6 +122,7 @@ const displayStats = computed(() => {
         @select="onSelect"
         @contextmenu="onContextmenu"
       />
+      <div v-if="selected" class="panel-backdrop" @click="onSelect(null)" />
       <DetailPanel :row="selected" @close="onSelect(null)" />
     </div>
     <StatsBar :stats="displayStats" :filtered="filteredCount" :running="settings.running" />
@@ -154,6 +155,12 @@ const displayStats = computed(() => {
   display: flex;
   min-height: 0;
   position: relative;
+}
+.panel-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9;
+  background: transparent;
 }
 .error-toast {
   position: fixed;

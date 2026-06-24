@@ -1,7 +1,6 @@
 package geo
 
 import (
-	"io/fs"
 	"net"
 	"os"
 	"strings"
@@ -91,12 +90,12 @@ func TestNilSafety(t *testing.T) {
 	if err := r.InitError(); err != nil {
 		t.Errorf("nil InitError = %v, want nil", err)
 	}
-	r.Close() // must not panic
+	r.Close()        // must not panic
 	r.InitAsync(nil) // must not panic
 }
 
 func TestLookupBeforeInit(t *testing.T) {
-	r, err := New(os.DirFS("../../data"))
+	r, err := New("../../data")
 	if err != nil {
 		t.Fatalf("New: %v", err)
 	}
@@ -118,10 +117,10 @@ func TestLookupBeforeInit(t *testing.T) {
 }
 
 func TestInitAsyncSuccess(t *testing.T) {
-	if _, err := fs.Stat(os.DirFS("../../data"), "ip2region_v4.xdb"); err != nil {
+	if _, err := os.Stat("../../data/ip2region_v4.xdb"); err != nil {
 		t.Skip("no ../../data/ip2region_v4.xdb; skipping live init test")
 	}
-	r, err := New(os.DirFS("../../data"))
+	r, err := New("../../data")
 	if err != nil {
 		t.Fatalf("New: %v", err)
 	}
@@ -150,10 +149,10 @@ func TestInitAsyncSuccess(t *testing.T) {
 }
 
 func TestInitAsyncIdempotent(t *testing.T) {
-	if _, err := fs.Stat(os.DirFS("../../data"), "ip2region_v4.xdb"); err != nil {
+	if _, err := os.Stat("../../data/ip2region_v4.xdb"); err != nil {
 		t.Skip("no ../../data/ip2region_v4.xdb; skipping idempotent test")
 	}
-	r, err := New(os.DirFS("../../data"))
+	r, err := New("../../data")
 	if err != nil {
 		t.Fatalf("New: %v", err)
 	}
@@ -221,7 +220,7 @@ func TestCleanField(t *testing.T) {
 	}
 	for in, want := range cases {
 		if got := cleanField(in); got != want {
-			t.Errorf("cleanField(%q) = %q, want %q", in, want, got)
+			t.Errorf("cleanField(%q) = %q, want %q", in, got, want)
 		}
 	}
 }
@@ -230,10 +229,10 @@ func TestCleanField(t *testing.T) {
 // end-to-end. The lazy-init tests above already cover the full flow;
 // this exists to keep a "real IP -> region" example in the suite.
 func TestLookupPublicIP(t *testing.T) {
-	if _, err := fs.Stat(os.DirFS("../../data"), "ip2region_v4.xdb"); err != nil {
+	if _, err := os.Stat("../../data/ip2region_v4.xdb"); err != nil {
 		t.Skip("no ../../data/ip2region_v4.xdb; skipping live lookup test")
 	}
-	r, err := New(os.DirFS("../../data"))
+	r, err := New("../../data")
 	if err != nil {
 		t.Fatalf("New: %v", err)
 	}
@@ -255,5 +254,15 @@ func TestLookupPublicIP(t *testing.T) {
 		} else {
 			t.Logf("%s -> %s", ip, got)
 		}
+	}
+}
+
+func TestResolveDataFilesMissing(t *testing.T) {
+	_, _, err := resolveDataFiles("./nonexistent-dir")
+	if err == nil {
+		t.Fatal("expected error for missing data dir")
+	}
+	if !strings.Contains(err.Error(), "missing") {
+		t.Errorf("error should mention missing file, got: %v", err)
 	}
 }

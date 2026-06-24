@@ -2,12 +2,10 @@ package geo
 
 import (
 	"fmt"
-	"io/fs"
 	"log"
 	"net"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -26,8 +24,8 @@ var (
 )
 
 type Resolver struct {
-	src   fs.FS
-	cache *lruCache
+	dataDir string
+	cache   *lruCache
 
 	mu          sync.Mutex
 	ip2r        *service.Ip2Region
@@ -37,24 +35,23 @@ type Resolver struct {
 	cb          func()
 }
 
-// New returns a Resolver that holds a reference to the source FS but
-// performs no I/O. Call InitAsync to extract the xdb files and build
-// the searcher pool in a background goroutine. Lookup before init
-// completes returns "".
-func New(src fs.FS) (*Resolver, error) {
-	if src == nil {
-		return nil, fmt.Errorf("geo: nil source FS")
+// New returns a Resolver configured to load xdb files from dataDir.
+// It performs no I/O; call InitAsync to verify the files and build the
+// searcher pool in a background goroutine. Lookup before init completes
+// returns "".
+func New(dataDir string) (*Resolver, error) {
+	if dataDir == "" {
+		return nil, fmt.Errorf("geo: empty data directory")
 	}
-	return &Resolver{src: src, cache: newLRU(cacheCapacity)}, nil
+	return &Resolver{dataDir: dataDir, cache: newLRU(cacheCapacity)}, nil
 }
 
-// InitAsync extracts the embedded xdb files (or side-loads them),
-// verifies them, and builds the searcher pool in a background
-// goroutine. onReady is invoked on the goroutine when init succeeds.
-// The call is idempotent: only the FIRST InitAsync call registers a
-// callback and triggers init; later calls return immediately without
-// firing onReady again. If init fails, the error is captured and
-// surfaced via InitError; onReady is not invoked.
+// InitAsync verifies the xdb files in dataDir and builds the searcher
+// pool in a background goroutine. onReady is invoked on the goroutine
+// when init succeeds. The call is idempotent: only the FIRST InitAsync
+// call registers a callback and triggers init; later calls return
+// immediately without firing onReady again. If init fails, the error is
+// captured and surfaced via InitError; onReady is not invoked.
 func (r *Resolver) InitAsync(onReady func()) {
 	if r == nil {
 		return
@@ -75,10 +72,8 @@ func (r *Resolver) runInit() {
 	err := r.initLocked()
 	if err != nil {
 		r.initErr = err
-		cb := r.cb
 		r.mu.Unlock()
 		log.Printf("geo: async init failed: %v", err)
-		_ = cb // discard; failure path does not invoke callback
 		return
 	}
 	r.ready = true
@@ -90,7 +85,7 @@ func (r *Resolver) runInit() {
 }
 
 func (r *Resolver) initLocked() error {
-	v4Path, v6Path, err := materialize(r.src)
+	v4Path, v6Path, err := resolveDataFiles(r.dataDir)
 	if err != nil {
 		return err
 	}
@@ -223,76 +218,19 @@ func cleanField(s string) string {
 	return s
 }
 
-// materialize places the xdb files in a stable on-disk location and
-// returns their absolute paths. Resolution order:
-//   1. <exe-dir>/data/                (side-load: power users can swap xdb files)
-//   2. embedded FS  →  user cache dir (one-time extraction; ~44MB total)
-//
-// Note: the xdb library verifies the file internally when NewV4Config /
-// NewV6Config is called, so we skip the standalone VerifyFromFile step
-// that previous versions did here. That saved ~44MB of redundant read
-// I/O at startup.
-func materialize(src fs.FS) (string, string, error) {
-	if exe, err := os.Executable(); err == nil {
-		exeDir := filepath.Dir(exe)
-		if v4, v6, ok := sideLoad(exeDir); ok {
-			return v4, v6, nil
-		}
+// resolveDataFiles checks that the required xdb files exist in dataDir.
+// It returns their absolute paths. The caller (InitAsync) runs this in a
+// background goroutine so missing files do not block application startup.
+func resolveDataFiles(dataDir string) (string, string, error) {
+	v4 := filepath.Join(dataDir, v4FileName)
+	v6 := filepath.Join(dataDir, v6FileName)
+	if !fileExists(v4) {
+		return "", "", fmt.Errorf("missing %s", v4)
 	}
-
-	cacheDir, err := cacheRoot()
-	if err != nil {
-		return "", "", err
+	if !fileExists(v6) {
+		return "", "", fmt.Errorf("missing %s", v6)
 	}
-	if err := os.MkdirAll(cacheDir, 0o755); err != nil {
-		return "", "", err
-	}
-
-	v4Dest := filepath.Join(cacheDir, v4FileName)
-	v6Dest := filepath.Join(cacheDir, v6FileName)
-	if err := extractIfMissing(src, v4FileName, v4Dest); err != nil {
-		return "", "", err
-	}
-	if err := extractIfMissing(src, v6FileName, v6Dest); err != nil {
-		return "", "", err
-	}
-	return v4Dest, v6Dest, nil
-}
-
-func sideLoad(exeDir string) (string, string, bool) {
-	v4 := filepath.Join(exeDir, "data", v4FileName)
-	v6 := filepath.Join(exeDir, "data", v6FileName)
-	if fileExists(v4) && fileExists(v6) {
-		return v4, v6, true
-	}
-	return "", "", false
-}
-
-func cacheRoot() (string, error) {
-	base, err := os.UserCacheDir()
-	if err != nil {
-		return "", err
-	}
-	return filepath.Join(base, "NetstatUI", "data"), nil
-}
-
-func extractIfMissing(src fs.FS, name, dest string) error {
-	if fileExists(dest) {
-		return nil
-	}
-	data, err := fs.ReadFile(src, name)
-	if err != nil {
-		return fmt.Errorf("read embedded %s: %w", name, err)
-	}
-	tmp := dest + ".tmp-" + strconv.FormatInt(time.Now().UnixNano(), 10)
-	if err := os.WriteFile(tmp, data, 0o644); err != nil {
-		return fmt.Errorf("write %s: %w", tmp, err)
-	}
-	if err := os.Rename(tmp, dest); err != nil {
-		_ = os.Remove(tmp)
-		return fmt.Errorf("rename %s: %w", dest, err)
-	}
-	return nil
+	return v4, v6, nil
 }
 
 func fileExists(p string) bool {

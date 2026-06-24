@@ -60,10 +60,16 @@ jobs:
         shell: pwsh
         run: |
           wails3 build
+          $dataDst = "bin/data"
+          if (Test-Path $dataDst) { Remove-Item -Path $dataDst -Recurse -Force }
+          Copy-Item -Path data -Destination $dataDst -Recurse -Force
 
       - name: Build (macOS)
         if: matrix.os == 'macos-latest'
-        run: wails3 build
+        run: |
+          wails3 build
+          rm -rf bin/data
+          cp -R data bin/data
 
       - name: Show binary
         shell: bash
@@ -71,11 +77,10 @@ jobs:
           ls -lah bin/
           file bin/${{ matrix.artifact }}
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.target }}
-          path: bin/${{ matrix.artifact }}
+          path: bin/
           if-no-files-found: error
 
   release:
@@ -86,8 +91,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           path: dist
 
@@ -95,11 +99,19 @@ jobs:
         shell: bash
         run: |
           cd dist
+
+          # Windows archive: binary + data/
           mv windows-amd64/NetstatUI.exe NetstatUI.exe
+          mv windows-amd64/data data
+          zip -r NetstatUI-windows-amd64.zip NetstatUI.exe data
+          rm -rf NetstatUI.exe data
+
+          # macOS archive: binary + data/
           mv darwin-arm64/NetstatUI NetstatUI
-          chmod +x NetstatUI
-          zip -j NetstatUI-windows-amd64.zip NetstatUI.exe
-          zip -j NetstatUI-macos-arm64.zip NetstatUI
+          mv darwin-arm64/data data
+          tar -czf NetstatUI-macos-arm64.tar.gz NetstatUI data
+          rm -rf NetstatUI data
+
           rm -rf windows-amd64 darwin-arm64
           ls -lah
 
@@ -108,4 +120,5 @@ jobs:
         with:
           files: |
             dist/*.zip
+            dist/*.tar.gz
           generate_release_notes: true

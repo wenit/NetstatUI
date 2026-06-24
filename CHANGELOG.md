@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.4.0] - 2026-06-24
+
+### Changed
+- xdb files no longer embedded in binary; loaded from `<exe-dir>/data/` at startup (side-load). Binary drops from 54 MB to 9.6 MB.
+- Remove embed/extract infrastructure; CI packages binary + `data/` together in release archives.
+
+### Added
+- Click outside DetailPanel to close it (transparent backdrop covers full window when panel is open).
+
 ## [0.3.1] - 2026-06-24
 
 ### Performance

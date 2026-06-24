@@ -3,6 +3,8 @@ package main
 import (
 	"embed"
 	"log"
+	"os"
+	"path/filepath"
 	"runtime"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
@@ -14,9 +16,6 @@ import (
 
 //go:embed all:frontend/dist
 var assets embed.FS
-
-//go:embed all:data
-var geoData embed.FS
 
 func init() {
 	application.RegisterEvent[[]netstat.ConnInfo]("conn:full")
@@ -35,7 +34,7 @@ func main() {
 	netstat.SetProvider(netstat.NewPlatformProvider())
 	cache := process.NewCache()
 
-	geoResolver, err := geo.New(geoData)
+	geoResolver, err := geo.New(geoDataDir())
 	if err != nil {
 		log.Printf("geo: init failed (geo lookup disabled): %v", err)
 	} else {
@@ -44,7 +43,7 @@ func main() {
 
 	app := application.New(application.Options{
 		Name:        "NetstatUI",
-		Description: "A graphical user interface for the netstat command",
+		Description: "NetstatUI",
 		Services: []application.Service{
 			application.NewService(NewAppService(cache)),
 			application.NewService(monitor.New(cache, geoResolver)),
@@ -71,4 +70,16 @@ func main() {
 	if err := app.Run(); err != nil {
 		log.Fatal(err)
 	}
+}
+
+// geoDataDir returns <exe-dir>/data, the directory that holds the
+// ip2region xdb files. The xdb files are no longer embedded in the
+// binary; they are expected to sit next to the executable so users can
+// swap or update them without rebuilding.
+func geoDataDir() string {
+	exe, err := os.Executable()
+	if err != nil {
+		return "data"
+	}
+	return filepath.Join(filepath.Dir(exe), "data")
 }
