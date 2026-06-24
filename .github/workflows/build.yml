@@ -2,7 +2,6 @@ name: Build
 
 on:
   push:
-    branches: [main]
     tags: ['v*']
   pull_request:
     branches: [main]
@@ -21,10 +20,10 @@ jobs:
         include:
           - target: windows-amd64
             os: windows-latest
-            artifact: NetstatUI-windows-amd64.exe
+            artifact: NetstatUI.exe
           - target: darwin-arm64
             os: macos-latest
-            artifact: NetstatUI-macos-arm64
+            artifact: NetstatUI
 
     steps:
       - name: Checkout
