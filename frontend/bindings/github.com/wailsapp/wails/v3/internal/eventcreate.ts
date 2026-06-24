@@ -18,6 +18,7 @@ function configure() {
         "conn:diff": $$createType0,
         "conn:full": $$createType2,
         "conn:stats": $$createType3,
+        "geo:status": $$createType4,
     }));
 }
 
@@ -26,5 +27,6 @@ const $$createType0 = monitor$0.Diff.createFrom;
 const $$createType1 = netstat$0.ConnInfo.createFrom;
 const $$createType2 = $Create.Array($$createType1);
 const $$createType3 = monitor$0.Stats.createFrom;
+const $$createType4 = monitor$0.GeoStatus.createFrom;
 
 configure();

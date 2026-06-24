@@ -8,6 +8,7 @@ export {
 
 export {
     Diff,
+    GeoStatus,
     SnapshotResult,
     Stats
 } from "./models.js";

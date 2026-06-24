@@ -4,7 +4,10 @@ import (
 	"io/fs"
 	"net"
 	"os"
+	"strings"
+	"sync"
 	"testing"
+	"time"
 )
 
 func TestFormatRegion(t *testing.T) {
@@ -77,36 +80,107 @@ func TestIsNonPublic(t *testing.T) {
 	}
 }
 
-func TestLookupSkipsNonPublic(t *testing.T) {
+func TestNilSafety(t *testing.T) {
 	var r *Resolver
 	if got := r.Lookup("8.8.8.8"); got != "" {
-		t.Errorf("nil resolver Lookup = %q, want empty", got)
+		t.Errorf("nil Lookup = %q, want empty", got)
 	}
-	empty := &Resolver{}
-	if got := empty.Lookup("8.8.8.8"); got != "" {
-		t.Errorf("empty resolver Lookup = %q, want empty", got)
+	if r.IsReady() {
+		t.Error("nil IsReady = true, want false")
 	}
-	if got := empty.Lookup(""); got != "" {
-		t.Errorf("empty addr = %q", got)
+	if err := r.InitError(); err != nil {
+		t.Errorf("nil InitError = %v, want nil", err)
 	}
-	if got := empty.Lookup("*"); got != "" {
-		t.Errorf("wildcard = %q", got)
+	r.Close() // must not panic
+	r.InitAsync(nil) // must not panic
+}
+
+func TestLookupBeforeInit(t *testing.T) {
+	r, err := New(os.DirFS("../../data"))
+	if err != nil {
+		t.Fatalf("New: %v", err)
 	}
-	if got := empty.Lookup("0.0.0.0"); got != "" {
-		t.Errorf("0.0.0.0 = %q", got)
+	if r.IsReady() {
+		t.Fatal("resolver should not be ready before InitAsync")
 	}
-	if got := empty.Lookup("::"); got != "" {
-		t.Errorf(":: = %q", got)
+	// All public-IP lookups return empty until init completes.
+	for _, ip := range []string{"8.8.8.8", "1.1.1.1"} {
+		if got := r.Lookup(ip); got != "" {
+			t.Errorf("Lookup(%s) before init = %q, want empty", ip, got)
+		}
 	}
-	if got := empty.Lookup("not-an-ip"); got != "" {
-		t.Errorf("invalid = %q", got)
+	// Local / non-public IPs still return empty (filtered before searcher access).
+	for _, ip := range []string{"127.0.0.1", "192.168.1.1", "", "*", "0.0.0.0", "::", "not-an-ip"} {
+		if got := r.Lookup(ip); got != "" {
+			t.Errorf("Lookup(%q) = %q, want empty", ip, got)
+		}
 	}
-	if got := empty.Lookup("127.0.0.1"); got != "" {
-		t.Errorf("loopback = %q", got)
+}
+
+func TestInitAsyncSuccess(t *testing.T) {
+	if _, err := fs.Stat(os.DirFS("../../data"), "ip2region_v4.xdb"); err != nil {
+		t.Skip("no ../../data/ip2region_v4.xdb; skipping live init test")
 	}
-	if got := empty.Lookup("192.168.1.1"); got != "" {
-		t.Errorf("private = %q", got)
+	r, err := New(os.DirFS("../../data"))
+	if err != nil {
+		t.Fatalf("New: %v", err)
 	}
+	defer r.Close()
+
+	ready := make(chan struct{})
+	r.InitAsync(func() { close(ready) })
+
+	select {
+	case <-ready:
+	case <-time.After(30 * time.Second):
+		t.Fatal("InitAsync did not complete within 30s")
+	}
+	if !r.IsReady() {
+		t.Fatal("resolver not ready after InitAsync callback")
+	}
+
+	for _, ip := range []string{"8.8.8.8", "1.1.1.1", "223.5.5.5"} {
+		got := r.Lookup(ip)
+		if got == "" {
+			t.Errorf("%s lookup returned empty", ip)
+			continue
+		}
+		t.Logf("%s -> %s", ip, got)
+	}
+}
+
+func TestInitAsyncIdempotent(t *testing.T) {
+	if _, err := fs.Stat(os.DirFS("../../data"), "ip2region_v4.xdb"); err != nil {
+		t.Skip("no ../../data/ip2region_v4.xdb; skipping idempotent test")
+	}
+	r, err := New(os.DirFS("../../data"))
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	defer r.Close()
+
+	var cbCount int
+	var mu sync.Mutex
+	ready := make(chan struct{}, 4)
+
+	for i := 0; i < 4; i++ {
+		r.InitAsync(func() {
+			mu.Lock()
+			cbCount++
+			mu.Unlock()
+			ready <- struct{}{}
+		})
+	}
+
+	// Wait for at least one callback; allow others to drain.
+	<-ready
+	time.Sleep(200 * time.Millisecond)
+
+	mu.Lock()
+	if cbCount != 1 {
+		t.Errorf("onReady invoked %d times, want 1", cbCount)
+	}
+	mu.Unlock()
 }
 
 func TestLRUCache(t *testing.T) {
@@ -147,27 +221,39 @@ func TestCleanField(t *testing.T) {
 	}
 	for in, want := range cases {
 		if got := cleanField(in); got != want {
-			t.Errorf("cleanField(%q) = %q, want %q", in, got, want)
+			t.Errorf("cleanField(%q) = %q, want %q", in, want, got)
 		}
 	}
 }
 
+// TestLookupPublicIP is a one-shot smoke test that the resolver works
+// end-to-end. The lazy-init tests above already cover the full flow;
+// this exists to keep a "real IP -> region" example in the suite.
 func TestLookupPublicIP(t *testing.T) {
-	disk := os.DirFS("../../data")
-	if _, err := fs.Stat(disk, "ip2region_v4.xdb"); err != nil {
+	if _, err := fs.Stat(os.DirFS("../../data"), "ip2region_v4.xdb"); err != nil {
 		t.Skip("no ../../data/ip2region_v4.xdb; skipping live lookup test")
 	}
-	r, err := New(disk)
+	r, err := New(os.DirFS("../../data"))
 	if err != nil {
 		t.Fatalf("New: %v", err)
 	}
 	defer r.Close()
+
+	ready := make(chan struct{})
+	r.InitAsync(func() { close(ready) })
+	<-ready
+
 	for _, ip := range []string{"8.8.8.8", "1.1.1.1", "223.5.5.5"} {
 		got := r.Lookup(ip)
 		if got == "" {
 			t.Errorf("%s lookup returned empty", ip)
 			continue
 		}
-		t.Logf("%s -> %s", ip, got)
+		if !strings.Contains(got, "-") {
+			// We accept either "Country" or "Country-City"; empty is the only failure.
+			t.Logf("%s -> %s (no city component)", ip, got)
+		} else {
+			t.Logf("%s -> %s", ip, got)
+		}
 	}
 }

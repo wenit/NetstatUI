@@ -23,6 +23,7 @@ func init() {
 	application.RegisterEvent[monitor.Diff]("conn:diff")
 	application.RegisterEvent[monitor.Stats]("conn:stats")
 	application.RegisterEvent[string]("conn:error")
+	application.RegisterEvent[monitor.GeoStatus]("geo:status")
 }
 
 func main() {

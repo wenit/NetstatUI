@@ -9,13 +9,22 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 // @ts-ignore: Unused imports
 import * as $models from "./models.js";
 
+/**
+ * GetGeoStatus reports the current geo resolver state for the frontend.
+ */
+export function GetGeoStatus(): $CancellablePromise<$models.GeoStatus> {
+    return $Call.ByID(1476625212).then(($result: any) => {
+        return $$createType0($result);
+    });
+}
+
 export function GetInterval(): $CancellablePromise<number> {
     return $Call.ByID(1186957896);
 }
 
 export function GetSnapshot(): $CancellablePromise<$models.SnapshotResult> {
     return $Call.ByID(4058836157).then(($result: any) => {
-        return $$createType0($result);
+        return $$createType1($result);
     });
 }
 
@@ -40,4 +49,5 @@ export function Stop(): $CancellablePromise<boolean> {
 }
 
 // Private type creation functions
-const $$createType0 = $models.SnapshotResult.createFrom;
+const $$createType0 = $models.GeoStatus.createFrom;
+const $$createType1 = $models.SnapshotResult.createFrom;

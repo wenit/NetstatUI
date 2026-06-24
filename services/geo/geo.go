@@ -3,6 +3,7 @@ package geo
 import (
 	"fmt"
 	"io/fs"
+	"log"
 	"net"
 	"os"
 	"path/filepath"
@@ -12,11 +13,11 @@ import (
 	"time"
 
 	"github.com/lionsoul2014/ip2region/binding/golang/service"
-	"github.com/lionsoul2014/ip2region/binding/golang/xdb"
 )
 
 const (
 	cacheCapacity = 4096
+	searcherCount = 4
 )
 
 var (
@@ -25,43 +26,132 @@ var (
 )
 
 type Resolver struct {
-	ip2r  *service.Ip2Region
+	src   fs.FS
 	cache *lruCache
+
+	mu          sync.Mutex
+	ip2r        *service.Ip2Region
+	ready       bool
+	initErr     error
+	initStarted bool
+	cb          func()
 }
 
+// New returns a Resolver that holds a reference to the source FS but
+// performs no I/O. Call InitAsync to extract the xdb files and build
+// the searcher pool in a background goroutine. Lookup before init
+// completes returns "".
 func New(src fs.FS) (*Resolver, error) {
-	v4Path, v6Path, err := materialize(src)
-	if err != nil {
-		return nil, err
+	if src == nil {
+		return nil, fmt.Errorf("geo: nil source FS")
 	}
+	return &Resolver{src: src, cache: newLRU(cacheCapacity)}, nil
+}
 
-	ip2r, err := service.NewIp2RegionWithPath(v4Path, v6Path)
-	if err != nil {
-		return nil, fmt.Errorf("ip2region init: %w", err)
+// InitAsync extracts the embedded xdb files (or side-loads them),
+// verifies them, and builds the searcher pool in a background
+// goroutine. onReady is invoked on the goroutine when init succeeds.
+// The call is idempotent: only the FIRST InitAsync call registers a
+// callback and triggers init; later calls return immediately without
+// firing onReady again. If init fails, the error is captured and
+// surfaced via InitError; onReady is not invoked.
+func (r *Resolver) InitAsync(onReady func()) {
+	if r == nil {
+		return
 	}
+	r.mu.Lock()
+	if r.initStarted {
+		r.mu.Unlock()
+		return
+	}
+	r.initStarted = true
+	r.cb = onReady
+	r.mu.Unlock()
+	go r.runInit()
+}
 
-	return &Resolver{
-		ip2r:  ip2r,
-		cache: newLRU(cacheCapacity),
-	}, nil
+func (r *Resolver) runInit() {
+	r.mu.Lock()
+	err := r.initLocked()
+	if err != nil {
+		r.initErr = err
+		cb := r.cb
+		r.mu.Unlock()
+		log.Printf("geo: async init failed: %v", err)
+		_ = cb // discard; failure path does not invoke callback
+		return
+	}
+	r.ready = true
+	cb := r.cb
+	r.mu.Unlock()
+	if cb != nil {
+		cb()
+	}
+}
+
+func (r *Resolver) initLocked() error {
+	v4Path, v6Path, err := materialize(r.src)
+	if err != nil {
+		return err
+	}
+	v4Cfg, err := service.NewV4Config(service.VIndexCache, v4Path, searcherCount)
+	if err != nil {
+		return fmt.Errorf("v4 config: %w", err)
+	}
+	v6Cfg, err := service.NewV6Config(service.VIndexCache, v6Path, searcherCount)
+	if err != nil {
+		return fmt.Errorf("v6 config: %w", err)
+	}
+	ip2r, err := service.NewIp2Region(v4Cfg, v6Cfg)
+	if err != nil {
+		return fmt.Errorf("ip2region init: %w", err)
+	}
+	r.ip2r = ip2r
+	return nil
+}
+
+// IsReady reports whether the searcher pool has finished initializing.
+func (r *Resolver) IsReady() bool {
+	if r == nil {
+		return false
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.ready
+}
+
+// InitError returns the error from a failed init, or nil if init
+// succeeded or has not yet completed.
+func (r *Resolver) InitError() error {
+	if r == nil {
+		return nil
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.initErr
 }
 
 func (r *Resolver) Close() {
-	if r == nil || r.ip2r == nil {
+	if r == nil {
 		return
 	}
-	r.ip2r.CloseTimeout(2 * time.Second)
+	r.mu.Lock()
+	ip2r := r.ip2r
+	r.mu.Unlock()
+	if ip2r == nil {
+		return
+	}
+	ip2r.CloseTimeout(2 * time.Second)
 }
 
 func (r *Resolver) Lookup(addr string) string {
-	if r == nil || r.ip2r == nil {
+	if r == nil {
 		return ""
 	}
 	addr = strings.TrimSpace(addr)
 	if addr == "" || addr == "*" || addr == "0.0.0.0" || addr == "::" {
 		return ""
 	}
-
 	ip := net.ParseIP(addr)
 	if ip == nil {
 		return ""
@@ -71,11 +161,18 @@ func (r *Resolver) Lookup(addr string) string {
 	}
 	key := ip.String()
 
+	r.mu.Lock()
+	ip2r := r.ip2r
+	r.mu.Unlock()
+	if ip2r == nil {
+		return ""
+	}
+
 	if v, ok := r.cache.get(key); ok {
 		return v
 	}
 
-	region, err := r.ip2r.Search(key)
+	region, err := ip2r.Search(key)
 	if err != nil || region == "" {
 		r.cache.put(key, "")
 		return ""
@@ -129,7 +226,12 @@ func cleanField(s string) string {
 // materialize places the xdb files in a stable on-disk location and
 // returns their absolute paths. Resolution order:
 //   1. <exe-dir>/data/                (side-load: power users can swap xdb files)
-//   2. embedded FS  →  user cache dir (one-time extraction; ~36MB total)
+//   2. embedded FS  →  user cache dir (one-time extraction; ~44MB total)
+//
+// Note: the xdb library verifies the file internally when NewV4Config /
+// NewV6Config is called, so we skip the standalone VerifyFromFile step
+// that previous versions did here. That saved ~44MB of redundant read
+// I/O at startup.
 func materialize(src fs.FS) (string, string, error) {
 	if exe, err := os.Executable(); err == nil {
 		exeDir := filepath.Dir(exe)
@@ -153,12 +255,6 @@ func materialize(src fs.FS) (string, string, error) {
 	}
 	if err := extractIfMissing(src, v6FileName, v6Dest); err != nil {
 		return "", "", err
-	}
-	if err := xdb.VerifyFromFile(v4Dest); err != nil {
-		return "", "", fmt.Errorf("verify %s: %w", v4FileName, err)
-	}
-	if err := xdb.VerifyFromFile(v6Dest); err != nil {
-		return "", "", fmt.Errorf("verify %s: %w", v6FileName, err)
 	}
 	return v4Dest, v6Dest, nil
 }

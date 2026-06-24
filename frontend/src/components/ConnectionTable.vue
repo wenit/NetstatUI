@@ -9,9 +9,11 @@ import { showError } from '../composables/useErrorDialog'
 import { showConfirm } from '../composables/useConfirmDialog'
 import { refreshNow } from '../composables/useConnections'
 import { useSettingsStore } from '../stores/settings'
+import { useGeoStatus } from '../composables/useGeoStatus'
 
 const { t } = useI18n()
 const settings = useSettingsStore()
+const { status: geoStatus } = useGeoStatus()
 
 const props = defineProps<{
   rows: ConnRow[]
@@ -160,6 +162,14 @@ watch(() => settings.geo, () => {
     scrollTop.value = 0
   }
 })
+
+// Geo is shown as: actual value (ready) | "..." (loading) | "—" (ready but private IP / no geo)
+const geoLoading = computed(() => geoStatus.value.state !== 'ready' && geoStatus.value.state !== 'disabled')
+function geoCellText(geo: string): string {
+  if (geo) return geo
+  if (geoLoading.value) return '…'
+  return '—'
+}
 </script>
 
 <template>
@@ -210,7 +220,7 @@ watch(() => settings.geo, () => {
           <div class="td flex mono">{{ v.row.localAddr }}</div>
           <div class="td port mono">{{ v.row.localPort }}</div>
           <div class="td flex mono">{{ v.row.remoteAddr || '*' }}<span v-if="v.row.remotePort" class="dim">:{{ v.row.remotePort }}</span></div>
-          <div v-if="settings.geo" class="td geo" :title="v.row.geo || ''">{{ v.row.geo || '—' }}</div>
+          <div v-if="settings.geo" class="td geo" :class="{ 'geo-loading': geoLoading && !v.row.geo }" :title="v.row.geo || ''">{{ geoCellText(v.row.geo) }}</div>
           <div class="td port mono">{{ v.row.remotePort || '—' }}</div>
           <div class="td state"><span class="dot" :style="{ background: stateColor(v.row.state) }" />{{ v.row.state }}</div>
           <div class="td pid mono">{{ v.row.pid || '—' }}</div>
@@ -297,6 +307,7 @@ watch(() => settings.geo, () => {
 .td.protocol.udp4, .td.protocol.udp6 { color: var(--state-listen); }
 .td.port { width: 72px; justify-content: flex-end; }
 .td.geo { width: 160px; color: var(--text-tertiary); font-size: 11.5px; }
+.td.geo.geo-loading { color: var(--text-tertiary); opacity: 0.55; letter-spacing: 0.5px; }
 .th.geo { width: 160px; }
 .td.state { width: 120px; gap: 6px; font-size: 11px; }
 .td.state .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }

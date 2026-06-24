@@ -26,6 +26,14 @@ type Diff struct {
 	Updated []netstat.ConnInfo `json:"updated"`
 }
 
+// GeoStatus is the public snapshot of the geo resolver's init state,
+// exposed to the frontend so it can render a loading indicator in the
+// geo column while the xdb searcher pool is warming up.
+type GeoStatus struct {
+	State string `json:"state"`           // "loading" | "ready" | "error" | "disabled"
+	Error string `json:"error,omitempty"`
+}
+
 type Monitor struct {
 	cache     *process.Cache
 	geo       *geo.Resolver
@@ -68,7 +76,46 @@ func (m *Monitor) ServiceStartup(_ context.Context, _ application.ServiceOptions
 	m.mu.Unlock()
 	m.app().Event.Emit("conn:full", conns)
 	m.app().Event.Emit("conn:stats", stats)
+
+	// Kick off async geo init. The first conn:full above ships without
+	// geo data; once init completes the resolver invokes our callback,
+	// which re-collects and emits a second conn:full that populates the
+	// geo column for every visible row.
+	if m.geo != nil {
+		m.geo.InitAsync(m.refreshAfterGeoReady)
+	}
 	return nil
+}
+
+// refreshAfterGeoReady is the onReady callback wired into geo.InitAsync.
+// By the time it runs, the resolver's searcher pool is hot, so a fresh
+// collect() will produce Geo values for every public-IP remote.
+func (m *Monitor) refreshAfterGeoReady() {
+	if m.geo == nil {
+		return
+	}
+	if err := m.geo.InitError(); err != nil {
+		log.Printf("monitor: geo init failed: %v", err)
+		m.app().Event.Emit("geo:status", m.GetGeoStatus())
+		return
+	}
+	log.Printf("monitor: geo ready, re-collecting with geo data")
+	m.app().Event.Emit("geo:status", m.GetGeoStatus())
+	m.RefreshNow()
+}
+
+// GetGeoStatus reports the current geo resolver state for the frontend.
+func (m *Monitor) GetGeoStatus() GeoStatus {
+	if m.geo == nil {
+		return GeoStatus{State: "disabled"}
+	}
+	if m.geo.IsReady() {
+		return GeoStatus{State: "ready"}
+	}
+	if err := m.geo.InitError(); err != nil {
+		return GeoStatus{State: "error", Error: err.Error()}
+	}
+	return GeoStatus{State: "loading"}
 }
 
 func (m *Monitor) ServiceShutdown() error {

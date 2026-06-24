@@ -9,6 +9,7 @@ import {
   startMonitor, stopMonitor, setIntervalMs, fetchSnapshot,
   type ConnRow,
 } from './composables/useConnections'
+import { initGeoStatus, useGeoStatus } from './composables/useGeoStatus'
 import { applyFilter, emptyFilter, type FilterState } from './composables/useFilters'
 import TitleBar from './components/TitleBar.vue'
 import Toolbar from './components/Toolbar.vue'
@@ -68,6 +69,7 @@ onMounted(async () => {
   }
 
   initConnections()
+  initGeoStatus()
   await fetchSnapshot()
   if (settings.running) {
     await startMonitor(settings.intervalMs)

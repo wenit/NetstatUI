@@ -50,6 +50,36 @@ export class Diff {
     }
 }
 
+/**
+ * GeoStatus is the public snapshot of the geo resolver's init state,
+ * exposed to the frontend so it can render a loading indicator in the
+ * geo column while the xdb searcher pool is warming up.
+ */
+export class GeoStatus {
+    /**
+     * "loading" | "ready" | "error" | "disabled"
+     */
+    "state": string;
+    "error"?: string;
+
+    /** Creates a new GeoStatus instance. */
+    constructor($$source: Partial<GeoStatus> = {}) {
+        if (!("state" in $$source)) {
+            this["state"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new GeoStatus instance from a string or object.
+     */
+    static createFrom($$source: any = {}): GeoStatus {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new GeoStatus($$parsedSource as Partial<GeoStatus>);
+    }
+}
+
 export class SnapshotResult {
     "conns": netstat$0.ConnInfo[];
     "stats": Stats;

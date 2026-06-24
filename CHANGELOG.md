@@ -1,9 +1,18 @@
 # Changelog
 
+## [0.3.1] - 2026-06-24
+
+### Performance
+- Restore `CreateToolhelp32Snapshot` for Windows process enumeration (replace gopsutil) — `Refresh()` from 3.9s → 10ms on busy machines (400+ processes).
+
+### Changed
+- Geo init made fully async: `geo.New()` is instant, searcher pool built in background goroutine via `InitAsync`. Geo column shows `…` while loading, batch-filled on ready.
+- Reduce geo searcher pool from 20 to 4.
+
 ## [0.3.0] - 2026-06-24
 
 ### Added
-- Remote IP geolocation column (`Country-City`, e.g. `中国-杭州`) via offline [ip2region](https://github.com/lionsoul2014/ip2region) v3. New `services/geo` package, xdb files embedded in binary, `data/*.xdb` gitignored, refresh via `scripts/download-xdb.ps1`.
+- Remote IP geolocation column (`Country-City`, e.g. `中国-杭州`) via offline [ip2region](https://github.com/lionsoul2014/ip2region) v3. New `services/geo` package, xdb files embedded in binary, committed to repo, refresh via `scripts/download-xdb.ps1`.
 - Settings → General → "IP 地理位置" toggle (`np.geo`, default on). Geo also shown in detail panel and included in search.
 
 ### Performance

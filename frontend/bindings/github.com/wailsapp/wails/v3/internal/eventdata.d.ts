@@ -19,6 +19,7 @@ declare module "@wailsio/runtime" {
             "conn:error": string;
             "conn:full": netstat$0.ConnInfo[];
             "conn:stats": monitor$0.Stats;
+            "geo:status": monitor$0.GeoStatus;
         }
     }
 }
